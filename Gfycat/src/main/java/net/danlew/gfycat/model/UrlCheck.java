@@ -10,6 +10,10 @@ public class UrlCheck implements Gfy {
     @SerializedName("gfyName")
     private String mGfyName;
 
+    public boolean isUrlKnown() {
+        return mUrlKnown;
+    }
+
     public String getGfyName() {
         return mGfyName;
     }
