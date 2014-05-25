@@ -15,27 +15,35 @@ public class GfycatService {
     private static final long MIN_KEY = 10000L;
     private static final long MAX_KEY = 9999999999L;
 
-    private IGfycatService mService;
+    // Annoying, Gfycat has two different endpoints for their API atm
+    private IGfycatConvertService mConvertService;
+    private IGfycatCheckService mCheckService;
 
     private Random mRandom;
 
     public GfycatService() {
-        RestAdapter restAdapter = new RestAdapter.Builder()
-            .setEndpoint("http://")
-            .build();
-        mService = restAdapter.create(IGfycatService.class);
+        mConvertService = new RestAdapter.Builder()
+            .setEndpoint("http://upload.gfycat.com/")
+            .build()
+            .create(IGfycatConvertService.class);
+
+        mCheckService = new RestAdapter.Builder()
+            .setEndpoint("http://gfycat.com/")
+            .build()
+            .create(IGfycatCheckService.class);
+
         mRandom = new Random();
     }
 
     public Observable<ConvertGif> convertGif(String url) {
         String randomString = Long.toString((long) Math.floor((mRandom.nextDouble() * (MAX_KEY - MIN_KEY)) + MIN_KEY));
         String encodedUrl = encodeUrl(url);
-        return mService.convertGif(randomString, encodedUrl);
+        return mConvertService.convertGif(randomString, encodedUrl);
     }
 
     public Observable<UrlCheck> checkUrl(String url) {
         String encodedUrl = encodeUrl(url);
-        return mService.checkUrl(encodedUrl);
+        return mCheckService.checkUrl(encodedUrl);
     }
 
     private static String encodeUrl(String url) {

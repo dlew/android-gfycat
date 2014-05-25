@@ -12,7 +12,8 @@ import javax.inject.Singleton;
 )
 public class ServiceModule {
 
-    @Provides @Singleton
+    @Provides
+    @Singleton
     GfycatService provideGfycatService() {
         return new GfycatService();
     }
