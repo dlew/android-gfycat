@@ -15,6 +15,7 @@ import butterknife.InjectView;
 import net.danlew.gfycat.GfycatApplication;
 import net.danlew.gfycat.R;
 import net.danlew.gfycat.model.ConvertGif;
+import net.danlew.gfycat.model.GfyMetadata;
 import net.danlew.gfycat.model.UrlCheck;
 import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
@@ -61,7 +62,7 @@ public class MainActivity extends Activity {
 
         if (savedInstanceState == null) {
             final String url = getIntent().getData().toString();
-            Observable<String> gfyNameObservable = mGfycatService.checkUrl(url)
+            Observable<GfyMetadata> gfyNameObservable = mGfycatService.checkUrl(url)
                 .flatMap(
                     new Func1<UrlCheck, Observable<String>>() {
                         @Override
@@ -91,22 +92,28 @@ public class MainActivity extends Activity {
                             return Observable.just(gfyName);
                         }
                     }
-                );
+                )
+                .flatMap(new Func1<String, Observable<? extends GfyMetadata>>() {
+                    @Override
+                    public Observable<? extends GfyMetadata> call(String gfyName) {
+                        return mGfycatService.getMetadata(gfyName);
+                    }
+                });
 
             Observable<MediaPlayer> readyForDisplayObservable = Observable.combineLatest(
                 gfyNameObservable,
                 mSurfaceTextureSubject,
-                new Func2<String, SurfaceTexture, MediaPlayer>() {
+                new Func2<GfyMetadata, SurfaceTexture, MediaPlayer>() {
                     @Override
-                    public MediaPlayer call(String gfyName, SurfaceTexture surfaceTexture) {
-                        if (TextUtils.isEmpty(gfyName) || surfaceTexture == null) {
+                    public MediaPlayer call(GfyMetadata gfyMetadata, SurfaceTexture surfaceTexture) {
+                        if (gfyMetadata == null || surfaceTexture == null) {
                             return null;
                         }
 
                         MediaPlayer mediaPlayer = new MediaPlayer();
 
                         try {
-                            mediaPlayer.setDataSource("http://zippy.gfycat.com/" + gfyName + ".webm");
+                            mediaPlayer.setDataSource(gfyMetadata.getGfyItem().getWebmUrl());
                             mediaPlayer.setSurface(new Surface(mVideoView.getSurfaceTexture()));
                         }
                         catch (Exception e) {

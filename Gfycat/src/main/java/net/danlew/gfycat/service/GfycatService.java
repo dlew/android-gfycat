@@ -1,13 +1,12 @@
 package net.danlew.gfycat.service;
 
 import net.danlew.gfycat.model.ConvertGif;
+import net.danlew.gfycat.model.GfyMetadata;
 import net.danlew.gfycat.model.UrlCheck;
 import retrofit.RestAdapter;
 import retrofit.android.AndroidLog;
 import rx.Observable;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Random;
 
 public class GfycatService {
@@ -17,8 +16,8 @@ public class GfycatService {
     private static final long MAX_KEY = 9999999999L;
 
     // Annoying, Gfycat has two different endpoints for their API atm
+    private IGfycatService mService;
     private IGfycatConvertService mConvertService;
-    private IGfycatCheckService mCheckService;
 
     private Random mRandom;
 
@@ -30,12 +29,12 @@ public class GfycatService {
             .build()
             .create(IGfycatConvertService.class);
 
-        mCheckService = new RestAdapter.Builder()
+        mService = new RestAdapter.Builder()
             .setEndpoint("http://gfycat.com/")
             .setLogLevel(RestAdapter.LogLevel.FULL)
             .setLog(new AndroidLog("zzz"))
             .build()
-            .create(IGfycatCheckService.class);
+            .create(IGfycatService.class);
 
         mRandom = new Random();
     }
@@ -46,6 +45,10 @@ public class GfycatService {
     }
 
     public Observable<UrlCheck> checkUrl(String url) {
-        return mCheckService.checkUrl(url);
+        return mService.checkUrl(url);
+    }
+
+    public Observable<GfyMetadata> getMetadata(String gfyName) {
+        return mService.getMetadata(gfyName);
     }
 }
