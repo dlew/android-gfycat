@@ -45,6 +45,8 @@ public class MainActivity extends Activity {
     @InjectView(R.id.error_text_view)
     TextView mErrorTextView;
 
+    private MediaPlayer mMediaPlayer;
+
     private Subscription mGetNameSubscription;
 
     private BehaviorSubject<SurfaceTexture> mSurfaceTextureSubject = BehaviorSubject.create((SurfaceTexture) null);
@@ -138,6 +140,8 @@ public class MainActivity extends Activity {
                         @Override
                         public void call(MediaPlayer mediaPlayer) {
                             try {
+                                mMediaPlayer = mediaPlayer;
+
                                 mediaPlayer.setLooping(true);
 
                                 mediaPlayer.setOnVideoSizeChangedListener(mAspectRatioListener);
@@ -173,6 +177,10 @@ public class MainActivity extends Activity {
         super.onDestroy();
 
         mGetNameSubscription.unsubscribe();
+
+        if (mMediaPlayer != null) {
+            mMediaPlayer.release();
+        }
     }
 
     private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
