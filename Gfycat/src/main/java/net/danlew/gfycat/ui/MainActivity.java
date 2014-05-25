@@ -5,6 +5,7 @@ import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -132,26 +133,30 @@ public class MainActivity extends Activity {
 
             mGetNameSubscription = AndroidObservable.bindActivity(this, readyForDisplayObservable)
                 .subscribeOn(Schedulers.io())
-                .subscribe(new Action1<MediaPlayer>() {
-                               @Override
-                               public void call(MediaPlayer mediaPlayer) {
-                                   try {
-                                       mediaPlayer.setLooping(true);
-                                       mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                           @Override
-                                           public void onPrepared(MediaPlayer mp) {
-                                               mProgressBar.setVisibility(View.GONE);
-                                               mp.start();
-                                           }
-                                       });
+                .subscribe(
+                    new Action1<MediaPlayer>() {
+                        @Override
+                        public void call(MediaPlayer mediaPlayer) {
+                            try {
+                                mediaPlayer.setLooping(true);
 
-                                       mediaPlayer.prepareAsync();
-                                   }
-                                   catch (Exception e) {
-                                       throw new RuntimeException(e);
-                                   }
-                               }
-                           },
+                                mediaPlayer.setOnVideoSizeChangedListener(mAspectRatioListener);
+
+                                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                    @Override
+                                    public void onPrepared(MediaPlayer mp) {
+                                        mProgressBar.setVisibility(View.GONE);
+                                        mp.start();
+                                    }
+                                });
+
+                                mediaPlayer.prepareAsync();
+                            }
+                            catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    },
                     new Action1<Throwable>() {
                         @Override
                         public void call(Throwable throwable) {
@@ -190,6 +195,40 @@ public class MainActivity extends Activity {
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture surface) {
 
+        }
+    };
+
+    private MediaPlayer.OnVideoSizeChangedListener mAspectRatioListener = new MediaPlayer.OnVideoSizeChangedListener() {
+        @Override
+        public void onVideoSizeChanged(MediaPlayer mp, int dwidth, int dheight) {
+            // We want to make sure the aspect ratio is correct; we can do that easily by scaling the TextureView
+            // to the correct size.
+            float scaleX;
+            float scaleY;
+
+            // Reset scaling so we can do proper calculations
+            mVideoView.setScaleX(1);
+            mVideoView.setScaleY(1);
+
+            // We want to figure out which dimension will fill; then scale the other one so it maintains aspect ratio
+            int vwidth = mVideoView.getWidth();
+            int vheight = mVideoView.getHeight();
+
+            float ratioX = (float) vwidth / (float) dwidth;
+            float ratioY = (float) vheight / (float) dheight;
+            if (ratioX < ratioY) {
+                scaleX = 1;
+                float desiredHeight = ratioX * dheight;
+                scaleY = desiredHeight / (float) vheight;
+            }
+            else {
+                float desiredWidth = ratioY * dwidth;
+                scaleX = desiredWidth / (float) vwidth;
+                scaleY = 1;
+            }
+
+            mVideoView.setScaleX(scaleX);
+            mVideoView.setScaleY(scaleY);
         }
     };
 }
