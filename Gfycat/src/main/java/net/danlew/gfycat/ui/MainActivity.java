@@ -9,6 +9,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import net.danlew.gfycat.GfycatApplication;
@@ -38,6 +39,9 @@ public class MainActivity extends Activity {
 
     @InjectView(R.id.video_view)
     TextureView mVideoView;
+
+    @InjectView(R.id.error_text_view)
+    TextView mErrorTextView;
 
     private Subscription mGetNameSubscription;
 
@@ -122,25 +126,33 @@ public class MainActivity extends Activity {
             mGetNameSubscription = AndroidObservable.bindActivity(this, readyForDisplayObservable)
                 .subscribeOn(Schedulers.io())
                 .subscribe(new Action1<MediaPlayer>() {
-                    @Override
-                    public void call(MediaPlayer mediaPlayer) {
-                        try {
-                            mediaPlayer.setLooping(true);
-                            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                @Override
-                                public void onPrepared(MediaPlayer mp) {
-                                    mProgressBar.setVisibility(View.GONE);
-                                    mp.start();
-                                }
-                            });
+                               @Override
+                               public void call(MediaPlayer mediaPlayer) {
+                                   try {
+                                       mediaPlayer.setLooping(true);
+                                       mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                           @Override
+                                           public void onPrepared(MediaPlayer mp) {
+                                               mProgressBar.setVisibility(View.GONE);
+                                               mp.start();
+                                           }
+                                       });
 
-                            mediaPlayer.prepareAsync();
-                        }
-                        catch (Exception e) {
-                            throw new RuntimeException(e);
+                                       mediaPlayer.prepareAsync();
+                                   }
+                                   catch (Exception e) {
+                                       throw new RuntimeException(e);
+                                   }
+                               }
+                           },
+                    new Action1<Throwable>() {
+                        @Override
+                        public void call(Throwable throwable) {
+                            mProgressBar.setVisibility(View.GONE);
+                            mErrorTextView.setVisibility(View.VISIBLE);
                         }
                     }
-                });
+                );
         }
     }
 
