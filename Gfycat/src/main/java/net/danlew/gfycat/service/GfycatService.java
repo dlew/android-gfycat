@@ -1,6 +1,7 @@
 package net.danlew.gfycat.service;
 
 import net.danlew.gfycat.model.ConvertGif;
+import net.danlew.gfycat.model.UrlCheck;
 import retrofit.RestAdapter;
 import rx.Observable;
 
@@ -19,7 +20,9 @@ public class GfycatService {
     private Random mRandom;
 
     public GfycatService() {
-        RestAdapter restAdapter = new RestAdapter.Builder().build();
+        RestAdapter restAdapter = new RestAdapter.Builder()
+            .setEndpoint("http://")
+            .build();
         mService = restAdapter.create(IGfycatService.class);
         mRandom = new Random();
     }
@@ -30,7 +33,7 @@ public class GfycatService {
         return mService.convertGif(randomString, encodedUrl);
     }
 
-    public Observable<ConvertGif> checkUrl(String url) {
+    public Observable<UrlCheck> checkUrl(String url) {
         String encodedUrl = encodeUrl(url);
         return mService.checkUrl(encodedUrl);
     }
