@@ -39,6 +39,7 @@ import javax.inject.Inject;
  */
 public class MainActivity extends Activity implements ErrorDialog.IListener {
 
+    private static final String INSTANCE_GFY_NAME = "INSTANCE_GFY_NAME";
     private static final String INSTANCE_GFY_METADATA = "INSTANCE_GFY_METADATA";
     private static final String INSTANCE_CURRENT_POSITION = "INSTANCE_CURRENT_POSITION";
 
@@ -54,6 +55,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @InjectView(R.id.video_view)
     TextureView mVideoView;
 
+    private String mGfyName;
     private GfyMetadata mGfyMetadata;
     private int mCurrentPosition;
 
@@ -88,6 +90,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         mVideoView.setSurfaceTextureListener(mSurfaceTextureListener);
 
         if (savedInstanceState != null) {
+            mGfyName = savedInstanceState.getString(INSTANCE_GFY_NAME);
             mGfyMetadata = savedInstanceState.getParcelable(INSTANCE_GFY_METADATA);
             mCurrentPosition = savedInstanceState.getInt(INSTANCE_CURRENT_POSITION);
         }
@@ -112,6 +115,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putString(INSTANCE_GFY_NAME, mGfyName);
         outState.putParcelable(INSTANCE_GFY_METADATA, mGfyMetadata);
 
         if (mMediaPlayer != null) {
@@ -138,9 +142,9 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     //////////////////////////////////////////////////////////////////////////
     // RxJava
 
-    private Observable<GfyMetadata> getGfyMetadataObservable() {
-        if (mGfyMetadata != null) {
-            return Observable.just(mGfyMetadata);
+    private Observable<String> getGfyNameObservable() {
+        if (!TextUtils.isEmpty(mGfyName)) {
+            return Observable.just(mGfyName);
         }
 
         final String url = getIntent().getData().toString();
@@ -176,6 +180,20 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     }
                 }
             )
+            .doOnNext(new Action1<String>() {
+                @Override
+                public void call(String gfyName) {
+                    mGfyName = gfyName;
+                }
+            });
+    }
+
+    private Observable<GfyMetadata> getGfyMetadataObservable() {
+        if (mGfyMetadata != null) {
+            return Observable.just(mGfyMetadata);
+        }
+
+        return getGfyNameObservable()
             .flatMap(new Func1<String, Observable<? extends GfyMetadata>>() {
                 @Override
                 public Observable<? extends GfyMetadata> call(String gfyName) {
