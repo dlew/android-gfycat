@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import butterknife.ButterKnife;
@@ -44,6 +45,9 @@ public class MainActivity extends Activity {
 
     @Inject
     GfycatService mGfycatService;
+
+    @InjectView(R.id.container)
+    ViewGroup mContainer;
 
     @InjectView(R.id.progress_bar)
     ProgressBar mProgressBar;
@@ -83,6 +87,12 @@ public class MainActivity extends Activity {
             mGfyMetadata = savedInstanceState.getParcelable(INSTANCE_GFY_METADATA);
             mLoadFailed = savedInstanceState.getBoolean(INSTANCE_LOAD_FAILED);
             mCurrentPosition = savedInstanceState.getInt(INSTANCE_CURRENT_POSITION);
+        }
+
+        // Fade in the background; looks nicer
+        if (savedInstanceState == null) {
+            mContainer.setAlpha(0);
+            mContainer.animate().alpha(1);
         }
     }
 
