@@ -2,6 +2,7 @@ package net.danlew.gfycat;
 
 import android.app.Application;
 import android.content.Context;
+import com.crashlytics.android.Crashlytics;
 import dagger.ObjectGraph;
 
 public class GfycatApplication extends Application {
@@ -14,9 +15,11 @@ public class GfycatApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        mObjectGraph = ObjectGraph.create(new ServiceModule());
+        Crashlytics.start(this);
 
         Log.configure(TAG, BuildConfig.DEBUG);
+
+        mObjectGraph = ObjectGraph.create(new ServiceModule());
     }
 
     public void inject(Object o) {

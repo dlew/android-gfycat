@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.crashlytics.android.Crashlytics;
 import net.danlew.gfycat.GfycatApplication;
 import net.danlew.gfycat.Log;
 import net.danlew.gfycat.R;
@@ -270,6 +271,7 @@ public class MainActivity extends Activity {
                     @Override
                     public void call(Throwable throwable) {
                         Log.e("Could not display GIF", throwable);
+                        Crashlytics.logException(throwable);
                         mProgressBar.setVisibility(View.GONE);
                         mErrorTextView.setVisibility(View.VISIBLE);
                     }

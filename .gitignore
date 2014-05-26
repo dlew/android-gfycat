@@ -2,3 +2,6 @@
 /local.properties
 /.idea/workspace.xml
 .DS_Store
+crashlytics.properties
+crashlytics-build.properties
+com_crashlytics_export_strings.xml
