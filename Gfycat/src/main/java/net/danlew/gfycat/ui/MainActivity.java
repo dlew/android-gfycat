@@ -29,8 +29,11 @@ import rx.subjects.BehaviorSubject;
 
 import javax.inject.Inject;
 
-// TODO: Handle rotation
 public class MainActivity extends Activity {
+
+    private static final String INSTANCE_GFY_METADATA = "INSTANCE_GFY_METADATA";
+    private static final String INSTANCE_LOAD_FAILED = "INSTANCE_LOAD_FAILED";
+    private static final String INSTANCE_CURRENT_POSITION = "INSTANCE_CURRENT_POSITION";
 
     @Inject
     GfycatService mGfycatService;
@@ -46,6 +49,7 @@ public class MainActivity extends Activity {
 
     private GfyMetadata mGfyMetadata;
     private boolean mLoadFailed;
+    private int mCurrentPosition;
 
     private MediaPlayer mMediaPlayer;
 
@@ -67,6 +71,12 @@ public class MainActivity extends Activity {
         ButterKnife.inject(this);
 
         mVideoView.setSurfaceTextureListener(mSurfaceTextureListener);
+
+        if (savedInstanceState != null) {
+            mGfyMetadata = savedInstanceState.getParcelable(INSTANCE_GFY_METADATA);
+            mLoadFailed = savedInstanceState.getBoolean(INSTANCE_LOAD_FAILED);
+            mCurrentPosition = savedInstanceState.getInt(INSTANCE_CURRENT_POSITION);
+        }
     }
 
     @Override
@@ -75,6 +85,17 @@ public class MainActivity extends Activity {
 
         // Always begin load in onStart(); we stop MediaPlayer in onStop() every time
         loadGfy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(INSTANCE_GFY_METADATA, mGfyMetadata);
+        outState.putBoolean(INSTANCE_LOAD_FAILED, mLoadFailed);
+
+        if (mMediaPlayer != null) {
+            outState.putInt(INSTANCE_CURRENT_POSITION, mMediaPlayer.getCurrentPosition());
+        }
     }
 
     @Override
@@ -179,6 +200,7 @@ public class MainActivity extends Activity {
                         public void onPrepared(MediaPlayer mp) {
                             mProgressBar.setVisibility(View.GONE);
                             mp.start();
+                            mp.seekTo(mCurrentPosition);
                         }
                     });
 
