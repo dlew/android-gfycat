@@ -10,7 +10,6 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import com.crashlytics.android.Crashlytics;
@@ -38,10 +37,9 @@ import javax.inject.Inject;
  * It's optimized to avoid having to restart the stream, so it handles its
  * own common configuration changes (e.g. orientation).
  */
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     private static final String INSTANCE_GFY_METADATA = "INSTANCE_GFY_METADATA";
-    private static final String INSTANCE_LOAD_FAILED = "INSTANCE_LOAD_FAILED";
     private static final String INSTANCE_CURRENT_POSITION = "INSTANCE_CURRENT_POSITION";
 
     @Inject
@@ -56,11 +54,7 @@ public class MainActivity extends Activity {
     @InjectView(R.id.video_view)
     TextureView mVideoView;
 
-    @InjectView(R.id.error_text_view)
-    TextView mErrorTextView;
-
     private GfyMetadata mGfyMetadata;
-    private boolean mLoadFailed;
     private int mCurrentPosition;
 
     private MediaPlayer mMediaPlayer;
@@ -86,7 +80,6 @@ public class MainActivity extends Activity {
 
         if (savedInstanceState != null) {
             mGfyMetadata = savedInstanceState.getParcelable(INSTANCE_GFY_METADATA);
-            mLoadFailed = savedInstanceState.getBoolean(INSTANCE_LOAD_FAILED);
             mCurrentPosition = savedInstanceState.getInt(INSTANCE_CURRENT_POSITION);
         }
 
@@ -101,15 +94,16 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
 
-        // Always begin load in onStart(); we stop MediaPlayer in onStop() every time
-        loadGfy();
+        // Begin a load, unless there was an error
+        if (getFragmentManager().findFragmentByTag(ErrorDialog.TAG) == null) {
+            loadGfy();
+        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable(INSTANCE_GFY_METADATA, mGfyMetadata);
-        outState.putBoolean(INSTANCE_LOAD_FAILED, mLoadFailed);
 
         if (mMediaPlayer != null) {
             outState.putInt(INSTANCE_CURRENT_POSITION, mMediaPlayer.getCurrentPosition());
@@ -129,7 +123,6 @@ public class MainActivity extends Activity {
         }
 
         mProgressBar.setVisibility(View.VISIBLE);
-        mErrorTextView.setVisibility(View.GONE);
         // TODO: Figure out how to reset TextureViews
     }
 
@@ -142,10 +135,6 @@ public class MainActivity extends Activity {
         }
 
         final String url = getIntent().getData().toString();
-
-        if (mLoadFailed) {
-            return Observable.error(new RuntimeException("Could not load gfy metadata for " + url));
-        }
 
         return mGfycatService.checkUrl(url)
             .flatMap(
@@ -189,12 +178,6 @@ public class MainActivity extends Activity {
                 public void call(GfyMetadata gfyMetadata) {
                     mGfyMetadata = gfyMetadata;
                 }
-            })
-            .doOnError(new Action1<Throwable>() {
-                @Override
-                public void call(Throwable throwable) {
-                    mLoadFailed = true;
-                }
             });
     }
 
@@ -229,7 +212,6 @@ public class MainActivity extends Activity {
                     catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-
 
                     return mediaPlayer;
                 }
@@ -272,8 +254,7 @@ public class MainActivity extends Activity {
                     public void call(Throwable throwable) {
                         Log.e("Could not display GIF", throwable);
                         Crashlytics.logException(throwable);
-                        mProgressBar.setVisibility(View.GONE);
-                        mErrorTextView.setVisibility(View.VISIBLE);
+                        new ErrorDialog().show(getFragmentManager(), "error");
                     }
                 }
             );
@@ -350,4 +331,11 @@ public class MainActivity extends Activity {
         mVideoView.setScaleY(scaleY);
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    // ErrorDialog.IListener
+
+    @Override
+    public void onDismiss() {
+        finish();
+    }
 }
