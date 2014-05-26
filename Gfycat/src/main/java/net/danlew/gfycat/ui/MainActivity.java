@@ -76,6 +76,15 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         ButterKnife.inject(this);
 
+        // We want clicking the translucent background to quit, but not the video
+        mVideoView.setClickable(true);
+        mContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
         mVideoView.setSurfaceTextureListener(mSurfaceTextureListener);
 
         if (savedInstanceState != null) {
