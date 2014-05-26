@@ -30,6 +30,12 @@ import rx.subjects.BehaviorSubject;
 
 import javax.inject.Inject;
 
+/**
+ * This Activity takes a GIF URL and converts it to Gfycat.
+ *
+ * It's optimized to avoid having to restart the stream, so it handles its
+ * own common configuration changes (e.g. orientation).
+ */
 public class MainActivity extends Activity {
 
     private static final String INSTANCE_GFY_METADATA = "INSTANCE_GFY_METADATA";
@@ -272,7 +278,7 @@ public class MainActivity extends Activity {
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
+            correctVideoAspectRatio();
         }
 
         @Override
@@ -290,34 +296,46 @@ public class MainActivity extends Activity {
     private MediaPlayer.OnVideoSizeChangedListener mAspectRatioListener = new MediaPlayer.OnVideoSizeChangedListener() {
         @Override
         public void onVideoSizeChanged(MediaPlayer mp, int dwidth, int dheight) {
-            // We want to make sure the aspect ratio is correct; we can do that easily by scaling the TextureView
-            // to the correct size.
-            float scaleX;
-            float scaleY;
-
-            // Reset scaling so we can do proper calculations
-            mVideoView.setScaleX(1);
-            mVideoView.setScaleY(1);
-
-            // We want to figure out which dimension will fill; then scale the other one so it maintains aspect ratio
-            int vwidth = mVideoView.getWidth();
-            int vheight = mVideoView.getHeight();
-
-            float ratioX = (float) vwidth / (float) dwidth;
-            float ratioY = (float) vheight / (float) dheight;
-            if (ratioX < ratioY) {
-                scaleX = 1;
-                float desiredHeight = ratioX * dheight;
-                scaleY = desiredHeight / (float) vheight;
-            }
-            else {
-                float desiredWidth = ratioY * dwidth;
-                scaleX = desiredWidth / (float) vwidth;
-                scaleY = 1;
-            }
-
-            mVideoView.setScaleX(scaleX);
-            mVideoView.setScaleY(scaleY);
+            correctVideoAspectRatio();
         }
     };
+
+    // We want to make sure the aspect ratio is correct; we can do that easily by scaling the TextureView
+    // to the correct size.
+    private void correctVideoAspectRatio() {
+        if (mMediaPlayer == null) {
+            return;
+        }
+
+        int dwidth = mMediaPlayer.getVideoWidth();
+        int dheight = mMediaPlayer.getVideoHeight();
+
+        float scaleX;
+        float scaleY;
+
+        // Reset scaling so we can do proper calculations
+        mVideoView.setScaleX(1);
+        mVideoView.setScaleY(1);
+
+        // We want to figure out which dimension will fill; then scale the other one so it maintains aspect ratio
+        int vwidth = mVideoView.getWidth();
+        int vheight = mVideoView.getHeight();
+
+        float ratioX = (float) vwidth / (float) dwidth;
+        float ratioY = (float) vheight / (float) dheight;
+        if (ratioX < ratioY) {
+            scaleX = 1;
+            float desiredHeight = ratioX * dheight;
+            scaleY = desiredHeight / (float) vheight;
+        }
+        else {
+            float desiredWidth = ratioY * dwidth;
+            scaleX = desiredWidth / (float) vwidth;
+            scaleY = 1;
+        }
+
+        mVideoView.setScaleX(scaleX);
+        mVideoView.setScaleY(scaleY);
+    }
+
 }
