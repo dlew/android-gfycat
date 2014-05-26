@@ -13,6 +13,7 @@ import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import net.danlew.gfycat.GfycatApplication;
+import net.danlew.gfycat.Log;
 import net.danlew.gfycat.R;
 import net.danlew.gfycat.model.ConvertGif;
 import net.danlew.gfycat.model.GfyMetadata;
@@ -252,6 +253,7 @@ public class MainActivity extends Activity {
                 new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
+                        Log.e("Could not display GIF", throwable);
                         mProgressBar.setVisibility(View.GONE);
                         mErrorTextView.setVisibility(View.VISIBLE);
                     }

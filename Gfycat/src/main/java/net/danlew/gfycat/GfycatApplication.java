@@ -6,6 +6,8 @@ import dagger.ObjectGraph;
 
 public class GfycatApplication extends Application {
 
+    public static final String TAG = "Gfycat";
+
     private ObjectGraph mObjectGraph;
 
     @Override
@@ -13,6 +15,8 @@ public class GfycatApplication extends Application {
         super.onCreate();
 
         mObjectGraph = ObjectGraph.create(new ServiceModule());
+
+        Log.configure(TAG, BuildConfig.DEBUG);
     }
 
     public void inject(Object o) {

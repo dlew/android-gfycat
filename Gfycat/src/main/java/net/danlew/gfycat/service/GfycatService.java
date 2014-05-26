@@ -1,5 +1,6 @@
 package net.danlew.gfycat.service;
 
+import net.danlew.gfycat.GfycatApplication;
 import net.danlew.gfycat.model.ConvertGif;
 import net.danlew.gfycat.model.GfyMetadata;
 import net.danlew.gfycat.model.UrlCheck;
@@ -24,15 +25,15 @@ public class GfycatService {
     public GfycatService() {
         mConvertService = new RestAdapter.Builder()
             .setEndpoint("http://upload.gfycat.com/")
-            .setLogLevel(RestAdapter.LogLevel.FULL)
-            .setLog(new AndroidLog("zzz"))
+            .setLogLevel(RestAdapter.LogLevel.BASIC)
+            .setLog(new AndroidLog(GfycatApplication.TAG))
             .build()
             .create(IGfycatConvertService.class);
 
         mService = new RestAdapter.Builder()
             .setEndpoint("http://gfycat.com/")
-            .setLogLevel(RestAdapter.LogLevel.FULL)
-            .setLog(new AndroidLog("zzz"))
+            .setLogLevel(RestAdapter.LogLevel.BASIC)
+            .setLog(new AndroidLog(GfycatApplication.TAG))
             .build()
             .create(IGfycatService.class);
 
