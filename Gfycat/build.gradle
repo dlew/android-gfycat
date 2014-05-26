@@ -29,8 +29,19 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
     }
+
+    signingConfigs {
+        release {
+            storeFile     file(KEYSTORE)
+            storePassword KEYSTORE_PASSWORD
+            keyAlias      KEY_ALIAS
+            keyPassword   KEY_PASSWORD
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
