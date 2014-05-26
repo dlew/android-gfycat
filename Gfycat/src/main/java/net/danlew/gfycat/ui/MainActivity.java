@@ -3,6 +3,7 @@ package net.danlew.gfycat.ui;
 import android.app.Activity;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Surface;
@@ -88,6 +89,12 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         });
 
         mVideoView.setSurfaceTextureListener(mSurfaceTextureListener);
+
+        // If this is an actual gfycat link, extract the name
+        Uri data = getIntent().getData();
+        if (data.getHost().endsWith("gfycat.com")) {
+            mGfyName = data.getLastPathSegment();
+        }
 
         if (savedInstanceState != null) {
             mGfyName = savedInstanceState.getString(INSTANCE_GFY_NAME);
