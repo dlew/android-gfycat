@@ -1,12 +1,17 @@
 package net.danlew.gfycat.ui;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.LabeledIntent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -35,6 +40,7 @@ import rx.schedulers.Schedulers;
 import rx.subjects.BehaviorSubject;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -167,7 +173,63 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     }
 
     private void showErrorDialog() {
-        new ErrorDialog().show(getFragmentManager(), "error");
+        getAlternatives().subscribe(
+            new Action1<List<LabeledIntent>>() {
+                @Override
+                public void call(List<LabeledIntent> intents) {
+                    if (intents.isEmpty()) {
+                        ErrorDialog.newInstance().show(getFragmentManager(), "error");
+                    }
+                    else {
+                        List<LabeledIntent> mutableIntentList = new ArrayList<>(intents);
+                        Intent chooserIntent =
+                            Intent.createChooser(mutableIntentList.remove(0), getString(R.string.error_alternatives));
+                        chooserIntent
+                            .putExtra(Intent.EXTRA_INITIAL_INTENTS, mutableIntentList.toArray(new Parcelable[]{}));
+                        startActivity(chooserIntent);
+                        finish();
+                    }
+                }
+            }
+        );
+    }
+
+    private Observable<List<LabeledIntent>> getAlternatives() {
+        final PackageManager packageManager = getPackageManager();
+        final String packageName = getPackageName();
+
+        final Intent intent = getIntent();
+        Intent dummy = new Intent(intent);
+        dummy.setComponent(null);
+
+        return Observable.from(packageManager.queryIntentActivities(dummy, 0))
+            .filter(new Func1<ResolveInfo, Boolean>() {
+                @Override
+                public Boolean call(ResolveInfo resolveInfo) {
+                    return !TextUtils.equals(resolveInfo.activityInfo.packageName, packageName);
+                }
+            })
+            .map(new Func1<ResolveInfo, LabeledIntent>() {
+                @Override
+                public LabeledIntent call(ResolveInfo resolveInfo) {
+                    Intent alternative = new Intent(intent);
+                    alternative.setPackage(resolveInfo.activityInfo.packageName);
+                    alternative.setClassName(resolveInfo.activityInfo.packageName, resolveInfo.activityInfo.name);
+
+                    LabeledIntent labeledAlternative = new LabeledIntent(alternative,
+                        resolveInfo.activityInfo.packageName, resolveInfo.loadLabel(packageManager), resolveInfo.icon);
+
+                    return labeledAlternative;
+                }
+            })
+            .toSortedList(new Func2<LabeledIntent, LabeledIntent, Integer>() {
+                @Override
+                public Integer call(LabeledIntent labeledIntent, LabeledIntent labeledIntent2) {
+                    String label = labeledIntent.getNonLocalizedLabel().toString();
+                    String label2 = labeledIntent2.getNonLocalizedLabel().toString();
+                    return label.compareTo(label2);
+                }
+            });
     }
 
     //////////////////////////////////////////////////////////////////////////

@@ -3,6 +3,8 @@
 
     <string name="app_name">Gfycat</string>
 
-    <string name="error_loading_gif">Sorry, this gif could not be loaded via gfycat.</string>
+    <string name="error_loading_gif">Sorry, this link could not be loaded via gfycat.</string>
+
+    <string name="error_alternatives">Gfycat failed, load image with</string>
 
 </resources>

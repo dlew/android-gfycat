@@ -14,6 +14,10 @@ public class ErrorDialog extends DialogFragment {
 
     private IListener mListener;
 
+    public static ErrorDialog newInstance() {
+        return new ErrorDialog();
+    }
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
