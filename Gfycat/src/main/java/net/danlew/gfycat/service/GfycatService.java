@@ -1,13 +1,21 @@
 package net.danlew.gfycat.service;
 
+import android.content.Context;
+import com.crashlytics.android.Crashlytics;
+import com.squareup.okhttp.Cache;
+import com.squareup.okhttp.OkHttpClient;
 import net.danlew.gfycat.GfycatApplication;
+import net.danlew.gfycat.Log;
 import net.danlew.gfycat.model.ConvertGif;
 import net.danlew.gfycat.model.GfyMetadata;
 import net.danlew.gfycat.model.UrlCheck;
 import retrofit.RestAdapter;
 import retrofit.android.AndroidLog;
+import retrofit.client.OkClient;
 import rx.Observable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Random;
 
 public class GfycatService {
@@ -22,8 +30,22 @@ public class GfycatService {
 
     private Random mRandom;
 
-    public GfycatService() {
+    public GfycatService(Context context) {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        try {
+            File cacheDir = context.getCacheDir();
+            Cache cache = new Cache(cacheDir, 1024);
+            okHttpClient.setCache(cache);
+        }
+        catch (IOException e) {
+            Log.e("Could not configure response cache", e);
+            Crashlytics.logException(e);
+        }
+
+        OkClient client = new OkClient(okHttpClient);
+
         mConvertService = new RestAdapter.Builder()
+            .setClient(client)
             .setEndpoint("http://upload.gfycat.com/")
             .setLogLevel(RestAdapter.LogLevel.BASIC)
             .setLog(new AndroidLog(GfycatApplication.TAG))
@@ -31,6 +53,7 @@ public class GfycatService {
             .create(IGfycatConvertService.class);
 
         mService = new RestAdapter.Builder()
+            .setClient(client)
             .setEndpoint("http://gfycat.com/")
             .setLogLevel(RestAdapter.LogLevel.BASIC)
             .setLog(new AndroidLog(GfycatApplication.TAG))

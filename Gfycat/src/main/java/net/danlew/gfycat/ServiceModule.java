@@ -1,5 +1,6 @@
 package net.danlew.gfycat;
 
+import android.app.Application;
 import dagger.Module;
 import dagger.Provides;
 import net.danlew.gfycat.service.GfycatService;
@@ -12,9 +13,15 @@ import javax.inject.Singleton;
 )
 public class ServiceModule {
 
+    private Application mApplication;
+
+    public ServiceModule(Application application) {
+        mApplication = application;
+    }
+
     @Provides
     @Singleton
     GfycatService provideGfycatService() {
-        return new GfycatService();
+        return new GfycatService(mApplication);
     }
 }

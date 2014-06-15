@@ -19,7 +19,7 @@ public class GfycatApplication extends Application {
 
         Log.configure(TAG, BuildConfig.DEBUG);
 
-        mObjectGraph = ObjectGraph.create(new ServiceModule());
+        mObjectGraph = ObjectGraph.create(new ServiceModule(this));
     }
 
     public void inject(Object o) {
