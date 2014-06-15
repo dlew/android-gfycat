@@ -173,6 +173,10 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     }
 
     private void showErrorDialog() {
+        // If possible, smoothly get rid of our screen before showing error dialog
+        mProgressBar.animate().alpha(0);
+        mContainer.animate().alpha(0);
+
         getAlternatives().subscribe(
             new Action1<List<LabeledIntent>>() {
                 @Override
