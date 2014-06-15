@@ -1,3 +1,5 @@
 # Changelog
 
-This will eventually have changes, once there is a major release.
+# 1.0
+
+* Initial release
