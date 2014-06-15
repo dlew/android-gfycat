@@ -1,6 +1,7 @@
 package net.danlew.gfycat.ui;
 
 import android.app.Activity;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -359,10 +360,6 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         float scaleX;
         float scaleY;
 
-        // Reset scaling so we can do proper calculations
-        mVideoView.setScaleX(1);
-        mVideoView.setScaleY(1);
-
         // We want to figure out which dimension will fill; then scale the other one so it maintains aspect ratio
         int vwidth = mVideoView.getWidth();
         int vheight = mVideoView.getHeight();
@@ -380,8 +377,9 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             scaleY = 1;
         }
 
-        mVideoView.setScaleX(scaleX);
-        mVideoView.setScaleY(scaleY);
+        Matrix matrix = new Matrix();
+        matrix.setScale(scaleX, scaleY, vwidth / 2, vheight / 2);
+        mVideoView.setTransform(matrix);
     }
 
     //////////////////////////////////////////////////////////////////////////
