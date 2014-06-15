@@ -31,6 +31,7 @@ import rx.schedulers.Schedulers;
 import rx.subjects.BehaviorSubject;
 
 import javax.inject.Inject;
+import java.util.List;
 
 /**
  * This Activity takes a GIF URL and converts it to Gfycat.
@@ -56,6 +57,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @InjectView(R.id.video_view)
     TextureView mVideoView;
 
+    private String mGifUrl;
     private String mGfyName;
     private GfyMetadata mGfyMetadata;
     private int mCurrentPosition;
@@ -93,7 +95,22 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         // If this is an actual gfycat link, extract the name
         Uri data = getIntent().getData();
         if (data.getHost().endsWith("gfycat.com")) {
-            mGfyName = data.getLastPathSegment();
+            List<String> pathSegments = data.getPathSegments();
+            if (pathSegments.size() == 0) {
+                // They've gone to gfycat.com itself; not sure yet how to disclude that URL,
+                // so just show an error dialog for now.
+                showErrorDialog();
+            }
+            else if (pathSegments.size() == 1) {
+                mGfyName = pathSegments.get(0);
+            }
+            else if (pathSegments.size() > 1 && pathSegments.get(0).equals("fetch")) {
+                String strUrl = data.toString();
+                mGifUrl = strUrl.substring(strUrl.indexOf("fetch") + 6);
+            }
+        }
+        else {
+            mGifUrl = data.toString();
         }
 
         if (savedInstanceState != null) {
@@ -146,6 +163,10 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         // TODO: Figure out how to reset TextureViews
     }
 
+    private void showErrorDialog() {
+        new ErrorDialog().show(getFragmentManager(), "error");
+    }
+
     //////////////////////////////////////////////////////////////////////////
     // RxJava
 
@@ -154,9 +175,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             return Observable.just(mGfyName);
         }
 
-        final String url = getIntent().getData().toString();
-
-        return mGfycatService.checkUrl(url)
+        return mGfycatService.checkUrl(mGifUrl)
             .flatMap(
                 new Func1<UrlCheck, Observable<String>>() {
                     @Override
@@ -165,7 +184,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                             return Observable.just(urlCheck.getGfyName());
                         }
 
-                        return mGfycatService.convertGif(url).map(new Func1<ConvertGif, String>() {
+                        return mGfycatService.convertGif(mGifUrl).map(new Func1<ConvertGif, String>() {
                             @Override
                             public String call(ConvertGif convertGif) {
                                 return convertGif.getGfyName();
@@ -180,7 +199,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     public Observable<? extends String> call(String gfyName) {
                         // Error out if the name is empty
                         if (TextUtils.isEmpty(gfyName)) {
-                            return Observable.error(new RuntimeException("Could not get gfyName for url: " + url));
+                            return Observable.error(new RuntimeException("Could not get gfyName for url: " + mGifUrl));
                         }
 
                         return Observable.just(gfyName);
@@ -288,7 +307,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     public void call(Throwable throwable) {
                         Log.e("Could not display GIF", throwable);
                         Crashlytics.logException(throwable);
-                        new ErrorDialog().show(getFragmentManager(), "error");
+                        showErrorDialog();
                     }
                 }
             );

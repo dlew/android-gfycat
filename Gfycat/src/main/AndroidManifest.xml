@@ -28,8 +28,6 @@
                 <data
                     android:host="*"
                     android:pathPattern=".*\\.gif" />
-
-                <data android:host="*gfycat.com" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -40,6 +38,18 @@
                 <data android:scheme="http" />
                 <data android:scheme="https" />
                 <data android:mimeType="image/gif" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+
+                <data android:host="*gfycat.com" />
+
             </intent-filter>
         </activity>
         <meta-data
