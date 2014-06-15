@@ -2,11 +2,14 @@ package net.danlew.gfycat.ui;
 
 import android.app.Activity;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -69,6 +72,11 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     private BehaviorSubject<SurfaceTexture> mSurfaceTextureSubject = BehaviorSubject.create((SurfaceTexture) null);
 
+    private GestureDetector mGestureDetector;
+
+    // Used to detect if we clicked inside the running video
+    private RectF mVideoRect;
+
     //////////////////////////////////////////////////////////////////////////
     // Lifecycle
 
@@ -82,14 +90,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         ButterKnife.inject(this);
 
-        // We want clicking the translucent background to quit, but not the video
-        mVideoView.setClickable(true);
-        mContainer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        mGestureDetector = new GestureDetector(this, mOnGestureListener);
 
         mVideoView.setSurfaceTextureListener(mSurfaceTextureListener);
 
@@ -158,6 +159,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
             mMediaPlayer = null;
+            mVideoRect = null;
         }
 
         mProgressBar.setVisibility(View.VISIBLE);
@@ -378,9 +380,36 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         }
 
         Matrix matrix = new Matrix();
-        matrix.setScale(scaleX, scaleY, vwidth / 2, vheight / 2);
+        matrix.setScale(scaleX, scaleY, vwidth / 2f, vheight / 2f);
         mVideoView.setTransform(matrix);
+
+        mVideoRect = new RectF(0, 0, vwidth, vheight);
+        matrix.mapRect(mVideoRect);
     }
+
+    //////////////////////////////////////////////////////////////////////////
+    // Gesture detection
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        mGestureDetector.onTouchEvent(event);
+
+        return super.onTouchEvent(event);
+    }
+
+    private GestureDetector.OnGestureListener mOnGestureListener = new GestureDetector.SimpleOnGestureListener() {
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            // We want to close the screen if the user clicks on anything but the
+            // animating GIF itself.
+            if (mVideoRect == null || !mVideoRect.contains(e.getX(), e.getY())) {
+                finish();
+                return true;
+            }
+
+            return false;
+        }
+    };
 
     //////////////////////////////////////////////////////////////////////////
     // ErrorDialog.IListener
