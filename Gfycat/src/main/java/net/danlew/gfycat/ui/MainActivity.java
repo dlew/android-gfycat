@@ -26,6 +26,7 @@ import com.crashlytics.android.Crashlytics;
 import net.danlew.gfycat.GfycatApplication;
 import net.danlew.gfycat.Log;
 import net.danlew.gfycat.R;
+import net.danlew.gfycat.Stats;
 import net.danlew.gfycat.model.ConvertGif;
 import net.danlew.gfycat.model.GfyMetadata;
 import net.danlew.gfycat.model.UrlCheck;
@@ -54,6 +55,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     private static final String INSTANCE_GFY_NAME = "INSTANCE_GFY_NAME";
     private static final String INSTANCE_GFY_METADATA = "INSTANCE_GFY_METADATA";
     private static final String INSTANCE_CURRENT_POSITION = "INSTANCE_CURRENT_POSITION";
+    private static final String INSTANCE_RECORDED_STATS = "INSTANCE_RECORDED_STATS";
 
     @Inject
     GfycatService mGfycatService;
@@ -82,6 +84,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     // Used to detect if we clicked inside the running video
     private RectF mVideoRect;
+
+    private boolean mRecordedStats;
 
     //////////////////////////////////////////////////////////////////////////
     // Lifecycle
@@ -125,6 +129,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             mGfyName = savedInstanceState.getString(INSTANCE_GFY_NAME);
             mGfyMetadata = savedInstanceState.getParcelable(INSTANCE_GFY_METADATA);
             mCurrentPosition = savedInstanceState.getInt(INSTANCE_CURRENT_POSITION);
+            mRecordedStats = savedInstanceState.getBoolean(INSTANCE_RECORDED_STATS);
         }
 
         // Fade in the background; looks nicer
@@ -153,6 +158,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         if (mMediaPlayer != null) {
             outState.putInt(INSTANCE_CURRENT_POSITION, mMediaPlayer.getCurrentPosition());
         }
+
+        outState.putBoolean(INSTANCE_RECORDED_STATS, mRecordedStats);
     }
 
     @Override
@@ -332,6 +339,12 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                             mProgressBar.setVisibility(View.GONE);
                             mp.start();
                             mp.seekTo(mCurrentPosition);
+
+                            if (!mRecordedStats) {
+                                Stats stats = new Stats(MainActivity.this);
+                                stats.addItem(mGfyMetadata.getGfyItem());
+                                mRecordedStats = true;
+                            }
                         }
                     });
 

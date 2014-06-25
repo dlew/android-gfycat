@@ -15,6 +15,12 @@ public class GfyItem implements Parcelable {
     @SerializedName("webmUrl")
     private String mWebmUrl;
 
+    @SerializedName("gifSize")
+    private long mGifSize;
+
+    @SerializedName("webmSize")
+    private long mWebmSize;
+
     public GfyItem() {
         // Default constructor
     }
@@ -29,6 +35,14 @@ public class GfyItem implements Parcelable {
 
     public String getWebmUrl() {
         return mWebmUrl;
+    }
+
+    public long getGifSize() {
+        return mGifSize;
+    }
+
+    public long getWebmSize() {
+        return mWebmSize;
     }
 
     //////////////////////////////////////////////////////////////////////////
