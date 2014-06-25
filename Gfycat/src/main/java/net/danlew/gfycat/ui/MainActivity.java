@@ -172,6 +172,14 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         // TODO: Figure out how to reset TextureViews
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        // For some reason, sometimes the back button doesn't finish this activity (seen it in the wild).
+        finish();
+    }
+
     private void showErrorDialog() {
         // If possible, smoothly get rid of our screen before showing error dialog
         mProgressBar.animate().alpha(0);
