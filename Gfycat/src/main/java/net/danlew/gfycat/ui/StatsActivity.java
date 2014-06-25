@@ -3,6 +3,7 @@ package net.danlew.gfycat.ui;
 import android.app.Activity;
 import android.os.Bundle;
 import android.text.format.Formatter;
+import android.view.View;
 import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -16,6 +17,9 @@ public class StatsActivity extends Activity {
 
     @InjectView(R.id.savings)
     TextView mSavingsTextView;
+
+    @InjectView(R.id.explanation)
+    TextView mExplanationTextView;
 
     private Stats mStats;
 
@@ -35,7 +39,16 @@ public class StatsActivity extends Activity {
         super.onResume();
 
         long savings = mStats.getTotalSavings();
-        String formattedSavings = Formatter.formatFileSize(this, savings);
-        mSavingsTextView.setText(formattedSavings);
+        if (savings == 0) {
+            mSavingsTextView.setText(R.string.diddly_squat);
+
+            mExplanationTextView.setVisibility(View.VISIBLE);
+        }
+        else {
+            String formattedSavings = Formatter.formatFileSize(this, savings);
+            mSavingsTextView.setText(formattedSavings);
+
+            mExplanationTextView.setVisibility(View.GONE);
+        }
     }
 }

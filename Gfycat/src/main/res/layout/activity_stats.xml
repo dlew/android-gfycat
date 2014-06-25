@@ -1,34 +1,50 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="16dp"
-    tools:context="net.danlew.gfycat.ui.StatsActivity">
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/you_saved"
-        android:textSize="18sp" />
-
-    <TextView
-        android:id="@+id/savings"
-        android:layout_width="192dp"
-        android:layout_height="192dp"
-        android:layout_marginBottom="12dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_stat"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:gravity="center"
-        android:textSize="28dp"
-        android:textStyle="bold"
-        tools:text="512.12MB" />
+        android:orientation="vertical"
+        android:padding="16dp"
+        tools:context="net.danlew.gfycat.ui.StatsActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:text="@string/using_gfycat" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/you_saved"
+            android:textSize="18sp" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/savings"
+            android:layout_width="192dp"
+            android:layout_height="192dp"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_stat"
+            android:gravity="center"
+            android:textSize="28dp"
+            android:textStyle="bold"
+            tools:text="@string/diddly_squat" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/using_gfycat"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/explanation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/explanation"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+    </LinearLayout>
+</ScrollView>
