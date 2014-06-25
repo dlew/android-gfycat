@@ -52,6 +52,15 @@
 
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.StatsActivity"
+            android:icon="@drawable/ic_launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <meta-data
             android:name="com.crashlytics.ApiKey"
             android:value="137f87beecc9964a6cd6868b3e04ec8ba452fe5e" />
