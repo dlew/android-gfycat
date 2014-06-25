@@ -31,7 +31,7 @@ public class GfyMetadata implements Parcelable {
     }
 
     private GfyMetadata(Parcel in) {
-        this.mGfyItem = in.readParcelable(((Object) mGfyItem).getClass().getClassLoader());
+        this.mGfyItem = in.readParcelable(GfyItem.class.getClassLoader());
     }
 
     public static final Parcelable.Creator<GfyMetadata> CREATOR = new Parcelable.Creator<GfyMetadata>() {
