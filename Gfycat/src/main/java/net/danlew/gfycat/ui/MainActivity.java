@@ -19,6 +19,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.URLUtil;
 import android.widget.ProgressBar;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -104,26 +105,45 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         mVideoView.setSurfaceTextureListener(mSurfaceTextureListener);
 
-        // If this is an actual gfycat link, extract the name
-        Uri data = getIntent().getData();
-        String host = data.getHost();
-        if (host != null && host.endsWith("gfycat.com")) {
-            List<String> pathSegments = data.getPathSegments();
-            if (pathSegments.size() == 0) {
-                // They've gone to gfycat.com itself; not sure yet how to disclude that URL,
-                // so just show an error dialog for now.
-                showErrorDialog();
-            }
-            else if (pathSegments.size() == 1) {
-                mGfyName = pathSegments.get(0);
-            }
-            else if (pathSegments.size() > 1 && pathSegments.get(0).equals("fetch")) {
-                String strUrl = data.toString();
-                mGifUrl = strUrl.substring(strUrl.indexOf("fetch") + 6);
+        Intent intent = getIntent();
+        String action = intent.getAction();
+
+        // Handle SEND Intent
+        if (Intent.ACTION_SEND.equals(action)) {
+            CharSequence sharedText = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+            if (!TextUtils.isEmpty(sharedText) && URLUtil.isNetworkUrl(sharedText.toString())) {
+                mGifUrl = sharedText.toString();
             }
         }
+
+        // If this is an actual gfycat link, extract the name
         else {
-            mGifUrl = data.toString();
+            // If this is an actual gfycat link, extract the name
+            Uri data = getIntent().getData();
+            String host = data.getHost();
+            if (host != null && host.endsWith("gfycat.com")) {
+                List<String> pathSegments = data.getPathSegments();
+                if (pathSegments.size() == 0) {
+                    // They've gone to gfycat.com itself; not sure yet how to disclude that URL,
+                    // so just show an error dialog for now.
+                    showErrorDialog();
+                }
+                else if (pathSegments.size() == 1) {
+                    mGfyName = pathSegments.get(0);
+                }
+                else if (pathSegments.size() > 1 && pathSegments.get(0).equals("fetch")) {
+                    String strUrl = data.toString();
+                    mGifUrl = strUrl.substring(strUrl.indexOf("fetch") + 6);
+                }
+            }
+            else {
+                mGifUrl = data.toString();
+            }
+        }
+
+        if (mGifUrl == null && mGfyName == null) {
+            showErrorDialog();
+            return;
         }
 
         if (savedInstanceState != null) {
