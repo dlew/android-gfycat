@@ -348,6 +348,16 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                         }
                     });
 
+                    // Enable looping for Samsung devices, tested on Galaxy S5 (4.4.4)
+                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mediaPlayer) {
+                                mediaPlayer.pause();
+                                mediaPlayer.seekTo(0);
+                                mediaPlayer.start();
+                            }
+                    });
+
                     try {
                         mediaPlayer.setDataSource(gfyMetadata.getGfyItem().getWebmUrl());
                         mediaPlayer.setSurface(new Surface(mVideoView.getSurfaceTexture()));
