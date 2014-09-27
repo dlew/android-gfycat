@@ -44,6 +44,7 @@ import rx.subjects.BehaviorSubject;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This Activity takes a GIF URL and converts it to Gfycat.
@@ -67,6 +68,9 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @InjectView(R.id.progress_bar)
     ProgressBar mProgressBar;
 
+    @InjectView(R.id.video_progress_bar)
+    ProgressBar mVideoProgressBar;
+
     @InjectView(R.id.video_view)
     TextureView mVideoView;
 
@@ -78,6 +82,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     private MediaPlayer mMediaPlayer;
 
     private Subscription mLoadVideoSubscription;
+    private Subscription mVideoProgressBarSubscription;
 
     private BehaviorSubject<SurfaceTexture> mSurfaceTextureSubject = BehaviorSubject.create((SurfaceTexture) null);
 
@@ -188,7 +193,12 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         super.onStop();
 
         // Reset the state of the entire Activity, prepare to reload everything in onStart()
-        mLoadVideoSubscription.unsubscribe();
+        if (mLoadVideoSubscription != null) {
+            mLoadVideoSubscription.unsubscribe();
+        }
+        if (mVideoProgressBarSubscription != null) {
+            mVideoProgressBarSubscription.unsubscribe();
+        }
 
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
@@ -361,6 +371,17 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                             mp.start();
                             mp.seekTo(mCurrentPosition);
 
+                            mVideoProgressBar.setProgress(mCurrentPosition);
+                            mVideoProgressBar.setMax(mMediaPlayer.getDuration());
+
+                            // Only set the progress bar visible if the duration is > 1000ms
+                            if (mMediaPlayer.getDuration() > 1000) {
+                                mVideoProgressBar.setVisibility(View.VISIBLE);
+                            }
+                            else {
+                                mVideoProgressBar.setVisibility(View.INVISIBLE);
+                            }
+
                             if (!mRecordedStats) {
                                 Stats stats = new Stats(MainActivity.this);
                                 stats.addItem(mGfyMetadata.getGfyItem());
@@ -417,8 +438,22 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     public void call(MediaPlayer mediaPlayer) {
                         try {
                             mediaPlayer.prepareAsync();
-                        }
-                        catch (Exception e) {
+
+                            mVideoProgressBarSubscription = Observable.interval(10, TimeUnit.MILLISECONDS)
+                                .map(new Func1<Long, Integer>() {
+                                    @Override
+                                    public Integer call(Long value) {
+                                        return mMediaPlayer.getCurrentPosition();
+                                    }
+                                })
+                                .subscribe(new Action1<Integer>() {
+                                    @Override
+                                    public void call(Integer progress) {
+                                        mVideoProgressBar.setProgress(progress);
+                                    }
+                                });
+
+                        } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     }
@@ -497,11 +532,20 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             scaleY = 1;
         }
 
+        // Update the dimensions of the video progress bar if it's visible
+        if (mVideoProgressBar.getVisibility() == View.VISIBLE) {
+            int mVideoProgressBarSize = mVideoProgressBar.getBottom() - mVideoProgressBar.getPaddingTop();
+            int horizontalPad = Math.round((vwidth - vwidth * scaleX) / 2f);
+            int verticalPad = Math.round((vheight - vheight * scaleY) / 2f + vheight * scaleY - mVideoProgressBarSize);
+            mVideoProgressBar.setPadding(horizontalPad, verticalPad, horizontalPad, 0);
+        }
+
         Matrix matrix = new Matrix();
         matrix.setScale(scaleX, scaleY, vwidth / 2f, vheight / 2f);
         mVideoView.setTransform(matrix);
 
         mVideoRect = new RectF(0, 0, vwidth, vheight);
+
         matrix.mapRect(mVideoRect);
     }
 

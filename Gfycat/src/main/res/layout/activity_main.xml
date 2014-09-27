@@ -20,4 +20,12 @@
         android:layout_gravity="center"
         android:indeterminateDrawable="@drawable/progress_gfycat" />
 
+    <ProgressBar android:id="@+id/video_progress_bar"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:minHeight="5dp"
+        android:maxHeight="5dp" />
+
 </FrameLayout>
