@@ -1,5 +1,8 @@
 # Changelog
 
+* (#13) Fixed broken looping on some devices
+* Fix crash when sent URL with no host
+
 # 1.1
 
 * Added StatsActivity and stats tracking
