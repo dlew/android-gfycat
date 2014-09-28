@@ -1,5 +1,6 @@
 # Changelog
 
+* Handle ACTION_SEND intents (when sent text is a URL)
 * (#13) Fixed broken looping on some devices
 * Fix crash when sent URL with no host
 
