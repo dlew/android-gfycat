@@ -7,4 +7,4 @@ Contributors
 ===========
 
 - Dan Lew (dlew)
-- John (megaclite)
+- John Seybold (jseybold)
