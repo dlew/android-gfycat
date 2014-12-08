@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Configuration;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -94,16 +93,12 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     private boolean mRecordedStats;
 
-    private boolean configChanged;
-
     //////////////////////////////////////////////////////////////////////////
     // Lifecycle
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        configChanged = false;
 
         if (savedInstanceState != null) {
             mGfyName = savedInstanceState.getString(INSTANCE_GFY_NAME);
@@ -166,15 +161,6 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         if (savedInstanceState == null) {
             mContainer.setAlpha(0);
             mContainer.animate().alpha(1);
-        }
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (mMediaPlayer != null)
-            if (mMediaPlayer.isPlaying()) {
-            configChanged = true;
         }
     }
 
@@ -555,19 +541,15 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         matrix.mapRect(mVideoRect);
 
-        // Update the dimensions of the video progress bar if it's visible
-        if (mVideoProgressBar.getVisibility() == View.VISIBLE) {
+        // Update the dimensions of the video progress bar
+        int horizontalPad = Math.round((vwidth - vwidth * scaleX) / 2f);
+        int verticalMargin = Math.round(mVideoRect.height() / 2f -0.5f);
 
-            int horizontalPad = Math.round((vwidth - vwidth * scaleX) / 2f);
-            int verticalPad = Math.round(mVideoRect.height());
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mVideoProgressBar.getLayoutParams();
+        params.topMargin = verticalMargin;
+        mVideoProgressBar.requestLayout();
 
-            if (configChanged == false) {
-                verticalPad = Math.round(verticalPad / 2f);
-            }
-
-            mVideoProgressBar.setPadding(horizontalPad, verticalPad, horizontalPad, 0);
-        }
-
+        mVideoProgressBar.setPadding(horizontalPad, 0, horizontalPad, 0);
     }
 
     //////////////////////////////////////////////////////////////////////////
