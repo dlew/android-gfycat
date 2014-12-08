@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Configuration;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -93,12 +94,23 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     private boolean mRecordedStats;
 
+    private boolean configChanged;
+
     //////////////////////////////////////////////////////////////////////////
     // Lifecycle
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        configChanged = false;
+
+        if (savedInstanceState != null) {
+            mGfyName = savedInstanceState.getString(INSTANCE_GFY_NAME);
+            mGfyMetadata = savedInstanceState.getParcelable(INSTANCE_GFY_METADATA);
+            mCurrentPosition = savedInstanceState.getInt(INSTANCE_CURRENT_POSITION);
+            mRecordedStats = savedInstanceState.getBoolean(INSTANCE_RECORDED_STATS);
+        }
 
         GfycatApplication.get(this).inject(this);
 
@@ -110,58 +122,59 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         mVideoView.setSurfaceTextureListener(mSurfaceTextureListener);
 
-        Intent intent = getIntent();
-        String action = intent.getAction();
+        if (mGfyName == null && mGifUrl == null) {
 
-        // Handle SEND Intent
-        if (Intent.ACTION_SEND.equals(action)) {
-            CharSequence sharedText = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-            if (!TextUtils.isEmpty(sharedText) && URLUtil.isNetworkUrl(sharedText.toString())) {
-                mGifUrl = sharedText.toString();
+            Intent intent = getIntent();
+
+            // Handle SEND Intent
+            if (Intent.ACTION_SEND.equals(intent.getAction())) {
+                CharSequence sharedText = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+                if (!TextUtils.isEmpty(sharedText) && URLUtil.isNetworkUrl(sharedText.toString())) {
+                    mGifUrl = sharedText.toString();
+                }
             }
-        }
 
-        // If this is an actual gfycat link, extract the name
-        else {
             // If this is an actual gfycat link, extract the name
-            Uri data = getIntent().getData();
-            String host = data.getHost();
-            if (host != null && host.endsWith("gfycat.com")) {
-                List<String> pathSegments = data.getPathSegments();
-                if (pathSegments.size() == 0) {
-                    // They've gone to gfycat.com itself; not sure yet how to disclude that URL,
-                    // so just show an error dialog for now.
-                    showErrorDialog();
-                }
-                else if (pathSegments.size() == 1) {
-                    mGfyName = pathSegments.get(0);
-                }
-                else if (pathSegments.size() > 1 && pathSegments.get(0).equals("fetch")) {
-                    String strUrl = data.toString();
-                    mGifUrl = strUrl.substring(strUrl.indexOf("fetch") + 6);
-                }
-            }
             else {
-                mGifUrl = data.toString();
+                // If this is an actual gfycat link, extract the name
+                Uri data = intent.getData();
+                String host = data.getHost();
+                if (host != null && host.endsWith("gfycat.com")) {
+                    List<String> pathSegments = data.getPathSegments();
+                    if (pathSegments.size() == 0) {
+                        // They've gone to gfycat.com itself; not sure yet how to disclude that URL,
+                        // so just show an error dialog for now.
+                        showErrorDialog();
+                    } else if (pathSegments.size() == 1) {
+                        mGfyName = pathSegments.get(0);
+                    } else if (pathSegments.size() > 1 && pathSegments.get(0).equals("fetch")) {
+                        String strUrl = data.toString();
+                        mGifUrl = strUrl.substring(strUrl.indexOf("fetch") + 6);
+                    }
+                } else {
+                    mGifUrl = data.toString();
+                }
             }
-        }
 
-        if (mGifUrl == null && mGfyName == null) {
-            showErrorDialog();
-            return;
-        }
-
-        if (savedInstanceState != null) {
-            mGfyName = savedInstanceState.getString(INSTANCE_GFY_NAME);
-            mGfyMetadata = savedInstanceState.getParcelable(INSTANCE_GFY_METADATA);
-            mCurrentPosition = savedInstanceState.getInt(INSTANCE_CURRENT_POSITION);
-            mRecordedStats = savedInstanceState.getBoolean(INSTANCE_RECORDED_STATS);
+            if (mGifUrl == null && mGfyName == null) {
+                showErrorDialog();
+                return;
+            }
         }
 
         // Fade in the background; looks nicer
         if (savedInstanceState == null) {
             mContainer.setAlpha(0);
             mContainer.animate().alpha(1);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (mMediaPlayer != null)
+            if (mMediaPlayer.isPlaying()) {
+            configChanged = true;
         }
     }
 
@@ -207,6 +220,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         }
 
         mProgressBar.setVisibility(View.VISIBLE);
+        mVideoProgressBar.setVisibility(View.INVISIBLE);
         // TODO: Figure out how to reset TextureViews
     }
 
@@ -401,6 +415,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     });
 
                     try {
+
                         mediaPlayer.setDataSource(gfyMetadata.getGfyItem().getWebmUrl());
                         mediaPlayer.setSurface(new Surface(mVideoView.getSurfaceTexture()));
                     }
@@ -532,14 +547,6 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             scaleY = 1;
         }
 
-        // Update the dimensions of the video progress bar if it's visible
-        if (mVideoProgressBar.getVisibility() == View.VISIBLE) {
-            int mVideoProgressBarSize = mVideoProgressBar.getBottom() - mVideoProgressBar.getPaddingTop();
-            int horizontalPad = Math.round((vwidth - vwidth * scaleX) / 2f);
-            int verticalPad = Math.round((vheight - vheight * scaleY) / 2f + vheight * scaleY - mVideoProgressBarSize);
-            mVideoProgressBar.setPadding(horizontalPad, verticalPad, horizontalPad, 0);
-        }
-
         Matrix matrix = new Matrix();
         matrix.setScale(scaleX, scaleY, vwidth / 2f, vheight / 2f);
         mVideoView.setTransform(matrix);
@@ -547,6 +554,20 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         mVideoRect = new RectF(0, 0, vwidth, vheight);
 
         matrix.mapRect(mVideoRect);
+
+        // Update the dimensions of the video progress bar if it's visible
+        if (mVideoProgressBar.getVisibility() == View.VISIBLE) {
+
+            int horizontalPad = Math.round((vwidth - vwidth * scaleX) / 2f);
+            int verticalPad = Math.round(mVideoRect.height());
+
+            if (configChanged == false) {
+                verticalPad = Math.round(verticalPad / 2f);
+            }
+
+            mVideoProgressBar.setPadding(horizontalPad, verticalPad, horizontalPad, 0);
+        }
+
     }
 
     //////////////////////////////////////////////////////////////////////////
