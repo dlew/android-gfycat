@@ -1,0 +1,7 @@
+<resources>
+
+    <style name="BaseTheme" parent="android:Theme.Material.Light.DarkActionBar" />
+
+    <style name="BaseTheme.NoActionBar" parent="android:Theme.Material.Light.NoActionBar.TranslucentDecor" />
+
+</resources>
