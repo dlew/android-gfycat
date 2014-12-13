@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 19
+        targetSdkVersion 21
         versionCode 3
         versionName "1.2"
     }
@@ -52,14 +52,14 @@ android {
 }
 
 dependencies {
-    compile 'com.squareup.retrofit:retrofit:1.6.0'
-    compile 'com.google.code.gson:gson:2.2.4'
-    compile 'com.netflix.rxjava:rxjava-core:0.19.1'
-    compile 'com.netflix.rxjava:rxjava-android:0.19.1'
-    compile 'com.jakewharton:butterknife:5.1.0'
-    compile 'com.squareup.dagger:dagger:1.2.1'
-    provided 'com.squareup.dagger:dagger-compiler:1.2.1'
+    compile 'com.squareup.retrofit:retrofit:1.8.0'
+    compile 'com.google.code.gson:gson:2.3.1'
+    compile 'io.reactivex:rxjava:1.0.2'
+    compile 'io.reactivex:rxandroid:0.23.0'
+    compile 'com.jakewharton:butterknife:6.0.0'
+    compile 'com.squareup.dagger:dagger:1.2.2'
+    provided 'com.squareup.dagger:dagger-compiler:1.2.2'
     compile 'com.crashlytics.android:crashlytics:1.+'
-    compile 'com.squareup.okhttp:okhttp:1.6.0'
-    compile 'com.squareup.okhttp:okhttp-urlconnection:1.6.0'
+    compile 'com.squareup.okhttp:okhttp:2.1.0'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.1.0'
 }
