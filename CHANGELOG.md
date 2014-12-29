@@ -1,5 +1,9 @@
 # Changelog
 
+# 1.2.1
+
+* Fixed two crashers
+
 # 1.2
 
 # Upgrade to Material theming for Lollipop
