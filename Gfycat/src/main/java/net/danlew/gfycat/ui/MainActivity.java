@@ -140,13 +140,16 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                         // They've gone to gfycat.com itself; not sure yet how to disclude that URL,
                         // so just show an error dialog for now.
                         showErrorDialog();
-                    } else if (pathSegments.size() == 1) {
+                    }
+                    else if (pathSegments.size() == 1) {
                         mGfyName = pathSegments.get(0);
-                    } else if (pathSegments.size() > 1 && pathSegments.get(0).equals("fetch")) {
+                    }
+                    else if (pathSegments.size() > 1 && pathSegments.get(0).equals("fetch")) {
                         String strUrl = data.toString();
                         mGifUrl = strUrl.substring(strUrl.indexOf("fetch") + 6);
                     }
-                } else {
+                }
+                else {
                     mGifUrl = data.toString();
                 }
             }
@@ -235,7 +238,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                         Intent chooserIntent =
                             Intent.createChooser(mutableIntentList.remove(0), getString(R.string.error_alternatives));
                         chooserIntent
-                            .putExtra(Intent.EXTRA_INITIAL_INTENTS, mutableIntentList.toArray(new Parcelable[]{}));
+                            .putExtra(Intent.EXTRA_INITIAL_INTENTS, mutableIntentList.toArray(new Parcelable[] { }));
                         startActivity(chooserIntent);
                         finish();
                     }
@@ -392,12 +395,12 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
                     // Enable looping for Samsung devices, tested on Galaxy S5 (4.4.4)
                     mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                            @Override
-                            public void onCompletion(MediaPlayer mediaPlayer) {
-                                mediaPlayer.pause();
-                                mediaPlayer.seekTo(0);
-                                mediaPlayer.start();
-                            }
+                        @Override
+                        public void onCompletion(MediaPlayer mediaPlayer) {
+                            mediaPlayer.pause();
+                            mediaPlayer.seekTo(0);
+                            mediaPlayer.start();
+                        }
                     });
 
                     try {
@@ -555,9 +558,9 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         // Update the dimensions of the video progress bar
         int horizontalPad = Math.round((vwidth - vwidth * scaleX) / 2f);
-        int verticalMargin = Math.round(mVideoRect.height() / 2f -0.5f);
+        int verticalMargin = Math.round(mVideoRect.height() / 2f - 0.5f);
 
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mVideoProgressBar.getLayoutParams();
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) mVideoProgressBar.getLayoutParams();
         params.topMargin = verticalMargin;
         mVideoProgressBar.requestLayout();
 
