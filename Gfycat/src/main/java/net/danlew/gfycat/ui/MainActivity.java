@@ -133,8 +133,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             else {
                 // If this is an actual gfycat link, extract the name
                 Uri data = intent.getData();
-                String host = data.getHost();
-                if (host != null && host.endsWith("gfycat.com")) {
+                if (data.getHost() != null && data.getHost().endsWith("gfycat.com")) {
                     List<String> pathSegments = data.getPathSegments();
                     if (pathSegments.size() == 0) {
                         // They've gone to gfycat.com itself; not sure yet how to disclude that URL,
