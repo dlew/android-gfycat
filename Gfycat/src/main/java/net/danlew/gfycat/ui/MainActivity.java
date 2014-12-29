@@ -180,7 +180,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         outState.putString(INSTANCE_GFY_NAME, mGfyName);
         outState.putParcelable(INSTANCE_GFY_METADATA, mGfyMetadata);
 
-        if (mMediaPlayer != null) {
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
             outState.putInt(INSTANCE_CURRENT_POSITION, mMediaPlayer.getCurrentPosition());
         }
 
@@ -441,6 +441,11 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                             mediaPlayer.prepareAsync();
 
                             mVideoProgressBarSubscription = Observable.interval(10, TimeUnit.MILLISECONDS)
+                                .filter(new Func1<Long, Boolean>() {
+                                    @Override public Boolean call(Long aLong) {
+                                        return mMediaPlayer.isPlaying();
+                                    }
+                                })
                                 .map(new Func1<Long, Integer>() {
                                     @Override
                                     public Integer call(Long value) {
@@ -448,13 +453,20 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                                     }
                                 })
                                 .subscribe(new Action1<Integer>() {
-                                    @Override
-                                    public void call(Integer progress) {
-                                        mVideoProgressBar.setProgress(progress);
-                                    }
-                                });
+                                               @Override
+                                               public void call(Integer progress) {
+                                                   mVideoProgressBar.setProgress(progress);
+                                               }
+                                           },
+                                    new Action1<Throwable>() {
+                                        @Override public void call(Throwable throwable) {
+                                            Crashlytics.logException(throwable);
+                                            showErrorDialog();
+                                        }
+                                    });
 
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     }
