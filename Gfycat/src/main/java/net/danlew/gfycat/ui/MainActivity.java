@@ -80,6 +80,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     private int mCurrentPosition;
 
     private MediaPlayer mMediaPlayer;
+    private boolean mMediaPlayerPrepared;
 
     private Subscription mLoadVideoSubscription;
     private Subscription mVideoProgressBarSubscription;
@@ -182,7 +183,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         outState.putString(INSTANCE_GFY_NAME, mGfyName);
         outState.putParcelable(INSTANCE_GFY_METADATA, mGfyMetadata);
 
-        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
+        if (mMediaPlayer != null && mMediaPlayerPrepared) {
             outState.putInt(INSTANCE_CURRENT_POSITION, mMediaPlayer.getCurrentPosition());
         }
 
@@ -379,6 +380,31 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                             // Only set the progress bar visible if the duration is > 1000ms
                             if (mMediaPlayer.getDuration() > 1000) {
                                 mVideoProgressBar.setVisibility(View.VISIBLE);
+
+                                mVideoProgressBarSubscription = Observable.interval(10, TimeUnit.MILLISECONDS)
+                                    .filter(new Func1<Long, Boolean>() {
+                                        @Override public Boolean call(Long aLong) {
+                                            return mMediaPlayerPrepared;
+                                        }
+                                    })
+                                    .map(new Func1<Long, Integer>() {
+                                        @Override
+                                        public Integer call(Long value) {
+                                            return mMediaPlayer.getCurrentPosition();
+                                        }
+                                    })
+                                    .subscribe(new Action1<Integer>() {
+                                                   @Override
+                                                   public void call(Integer progress) {
+                                                       mVideoProgressBar.setProgress(progress);
+                                                   }
+                                               },
+                                        new Action1<Throwable>() {
+                                            @Override public void call(Throwable throwable) {
+                                                Crashlytics.logException(throwable);
+                                                showErrorDialog();
+                                            }
+                                        });
                             }
                             else {
                                 mVideoProgressBar.setVisibility(View.INVISIBLE);
@@ -389,6 +415,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                                 stats.addItem(mGfyMetadata.getGfyItem());
                                 mRecordedStats = true;
                             }
+
+                            mMediaPlayerPrepared = true;
                         }
                     });
 
@@ -403,7 +431,6 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     });
 
                     try {
-
                         mediaPlayer.setDataSource(gfyMetadata.getGfyItem().getWebmUrl());
                         mediaPlayer.setSurface(new Surface(mVideoView.getSurfaceTexture()));
                     }
@@ -440,33 +467,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     @Override
                     public void call(MediaPlayer mediaPlayer) {
                         try {
+                            mMediaPlayerPrepared = false;
                             mediaPlayer.prepareAsync();
-
-                            mVideoProgressBarSubscription = Observable.interval(10, TimeUnit.MILLISECONDS)
-                                .filter(new Func1<Long, Boolean>() {
-                                    @Override public Boolean call(Long aLong) {
-                                        return mMediaPlayer.isPlaying();
-                                    }
-                                })
-                                .map(new Func1<Long, Integer>() {
-                                    @Override
-                                    public Integer call(Long value) {
-                                        return mMediaPlayer.getCurrentPosition();
-                                    }
-                                })
-                                .subscribe(new Action1<Integer>() {
-                                               @Override
-                                               public void call(Integer progress) {
-                                                   mVideoProgressBar.setProgress(progress);
-                                               }
-                                           },
-                                    new Action1<Throwable>() {
-                                        @Override public void call(Throwable throwable) {
-                                            Crashlytics.logException(throwable);
-                                            showErrorDialog();
-                                        }
-                                    });
-
                         }
                         catch (Exception e) {
                             throw new RuntimeException(e);
