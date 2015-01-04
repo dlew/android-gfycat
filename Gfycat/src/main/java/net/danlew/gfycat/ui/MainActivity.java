@@ -34,7 +34,7 @@ import net.danlew.gfycat.model.UrlCheck;
 import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
 import rx.Subscription;
-import rx.android.observables.AndroidObservable;
+import rx.android.app.AppObservable;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
@@ -460,7 +460,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         Observable<GfyMetadata> gfyMetadataObservable = getGfyMetadataObservable();
         Observable<MediaPlayer> readyForDisplayObservable = getLoadMediaPlayerObservable(gfyMetadataObservable);
 
-        mLoadVideoSubscription = AndroidObservable.bindActivity(this, readyForDisplayObservable)
+        mLoadVideoSubscription = AppObservable.bindActivity(this, readyForDisplayObservable)
             .subscribeOn(Schedulers.io())
             .subscribe(
                 new Action1<MediaPlayer>() {
