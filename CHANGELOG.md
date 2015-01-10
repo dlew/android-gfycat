@@ -1,5 +1,7 @@
 # Changelog
 
+* Handle MediaPlayer errors gracefully
+
 # 1.2.2
 
 * Setup timing better for MediaPlayer progress tracking (to avoid crashes)

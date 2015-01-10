@@ -430,6 +430,18 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                         }
                     });
 
+                    // Stop what we're doing in case of an error
+                    mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                        @Override public boolean onError(MediaPlayer mp, int what, int extra) {
+                            mMediaPlayerPrepared = false;
+
+                            Crashlytics.log("MediaPlayer error; what=" + what + " extra=" + extra);
+                            showErrorDialog();
+
+                            return false;
+                        }
+                    });
+
                     try {
                         mediaPlayer.setDataSource(gfyMetadata.getGfyItem().getWebmUrl());
                         mediaPlayer.setSurface(new Surface(mVideoView.getSurfaceTexture()));
