@@ -6,13 +6,11 @@ buildscript {
 
     dependencies {
         classpath 'com.crashlytics.tools.gradle:crashlytics-gradle:1.+'
-        classpath 'com.github.ben-manes:gradle-versions-plugin:0.6'
     }
 }
 
 apply plugin: 'android'
 apply plugin: 'crashlytics'
-apply plugin: 'com.github.ben-manes.versions'
 
 repositories {
     maven { url 'http://download.crashlytics.com/maven' }
@@ -56,7 +54,7 @@ android {
 }
 
 dependencies {
-    compile 'com.squareup.retrofit:retrofit:1.8.0'
+    compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile 'com.google.code.gson:gson:2.3.1'
     compile 'io.reactivex:rxjava:1.0.4'
     compile 'io.reactivex:rxandroid:0.24.0'
@@ -64,6 +62,5 @@ dependencies {
     compile 'com.squareup.dagger:dagger:1.2.2'
     provided 'com.squareup.dagger:dagger-compiler:1.2.2'
     compile 'com.crashlytics.android:crashlytics:1.+'
-    compile 'com.squareup.okhttp:okhttp:2.1.0'
-    compile 'com.squareup.okhttp:okhttp-urlconnection:2.1.0'
+    compile 'com.squareup.okhttp:okhttp:2.2.0'
 }
