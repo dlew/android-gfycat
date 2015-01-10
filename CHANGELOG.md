@@ -1,5 +1,7 @@
 # Changelog
 
+# 1.2.3
+
 * Handle MediaPlayer errors gracefully
 
 # 1.2.2
