@@ -20,12 +20,20 @@
         android:layout_gravity="center"
         android:indeterminateDrawable="@drawable/progress_gfycat" />
 
-    <ProgressBar android:id="@+id/video_progress_bar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:visibility="invisible"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="-6dp" />
+    <FrameLayout
+        android:id="@+id/video_progress_bar_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center">
+
+        <ProgressBar android:id="@+id/video_progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:visibility="invisible"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_marginTop="-6dp" />
+
+    </FrameLayout>
 
 </FrameLayout>
