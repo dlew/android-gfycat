@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- These two move in tandem to place the video progress bar in the right spot -->
+    <dimen name="video_progress_bar_height">8dp</dimen>
+    <dimen name="video_progress_bar_offset">-5dp</dimen>
+
+</resources>

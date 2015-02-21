@@ -569,15 +569,13 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         matrix.mapRect(mVideoRect);
 
-        // Update the dimensions of the video progress bar
-        int horizontalPad = Math.round((vwidth - vwidth * scaleX) / 2f);
-        int verticalMargin = Math.round(mVideoRect.height() / 2f - 0.5f);
+        // Update the location of the video progress bar
+        int actualHeight = (int) (vheight * scaleY);
+        int videoBottom = vheight - (vheight - actualHeight) / 2;
+        int offset = getResources().getDimensionPixelSize(R.dimen.video_progress_bar_offset);
 
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) mVideoProgressBar.getLayoutParams();
-        params.topMargin = verticalMargin;
-        mVideoProgressBar.requestLayout();
-
-        mVideoProgressBar.setPadding(horizontalPad, 0, horizontalPad, 0);
+        mVideoProgressBar.setScaleX(scaleX);
+        mVideoProgressBar.setTranslationY(videoBottom + offset);
     }
 
     //////////////////////////////////////////////////////////////////////////
