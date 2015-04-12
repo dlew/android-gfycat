@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Matrix;
 import android.graphics.RectF;
-import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -30,6 +29,8 @@ import net.danlew.gfycat.R;
 import net.danlew.gfycat.Stats;
 import net.danlew.gfycat.model.GfyItem;
 import net.danlew.gfycat.model.GfyMetadata;
+import net.danlew.gfycat.rx.SurfaceTextureEvent;
+import net.danlew.gfycat.rx.TextureChangeOnSubscribe;
 import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
 import rx.Subscription;
@@ -38,7 +39,6 @@ import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
 import rx.schedulers.Schedulers;
-import rx.subjects.BehaviorSubject;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -84,7 +84,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     private Subscription mLoadVideoSubscription;
     private Subscription mVideoProgressBarSubscription;
 
-    private BehaviorSubject<SurfaceTexture> mSurfaceTextureSubject = BehaviorSubject.create((SurfaceTexture) null);
+    private Observable<SurfaceTextureEvent> mSurfaceTextureEvents;
 
     private GestureDetector mGestureDetector;
 
@@ -115,7 +115,12 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         mGestureDetector = new GestureDetector(this, mOnGestureListener);
 
-        mVideoView.setSurfaceTextureListener(mSurfaceTextureListener);
+        mSurfaceTextureEvents = Observable.create(new TextureChangeOnSubscribe(mVideoView)).share();
+
+        // Correct aspect ratio if the video size changes
+        mSurfaceTextureEvents
+            .filter(event -> event.getType() == SurfaceTextureEvent.Type.SIZE_CHANGED)
+            .subscribe(__ -> correctVideoAspectRatio());
 
         if (mGfyName == null && mGifUrl == null) {
 
@@ -288,11 +293,11 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     // RxJava
 
     private Observable<MediaPlayer> getLoadMediaPlayerObservable(Observable<GfyItem> gfyMetadataObservable) {
-        return Observable.combineLatest(gfyMetadataObservable, mSurfaceTextureSubject,
-            new Func2<GfyItem, SurfaceTexture, MediaPlayer>() {
+        return Observable.combineLatest(gfyMetadataObservable, mSurfaceTextureEvents,
+            new Func2<GfyItem, SurfaceTextureEvent, MediaPlayer>() {
                 @Override
-                public MediaPlayer call(GfyItem gfyItem, SurfaceTexture surfaceTexture) {
-                    if (gfyItem == null || surfaceTexture == null) {
+                public MediaPlayer call(GfyItem gfyItem, SurfaceTextureEvent surfaceTextureEvent) {
+                    if (gfyItem == null || surfaceTextureEvent.getType() != SurfaceTextureEvent.Type.AVAILABLE) {
                         return null;
                     }
 
@@ -435,29 +440,6 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     //////////////////////////////////////////////////////////////////////////
     // Listeners
-
-    private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            mSurfaceTextureSubject.onNext(surface);
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-            correctVideoAspectRatio();
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-            mSurfaceTextureSubject.onNext(null);
-            return false;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
-        }
-    };
 
     private MediaPlayer.OnVideoSizeChangedListener mAspectRatioListener = new MediaPlayer.OnVideoSizeChangedListener() {
         @Override
