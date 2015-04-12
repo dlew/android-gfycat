@@ -28,9 +28,8 @@ import net.danlew.gfycat.GfycatApplication;
 import net.danlew.gfycat.Log;
 import net.danlew.gfycat.R;
 import net.danlew.gfycat.Stats;
-import net.danlew.gfycat.model.ConvertGif;
+import net.danlew.gfycat.model.GfyItem;
 import net.danlew.gfycat.model.GfyMetadata;
-import net.danlew.gfycat.model.UrlCheck;
 import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
 import rx.Subscription;
@@ -288,76 +287,12 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     //////////////////////////////////////////////////////////////////////////
     // RxJava
 
-    private Observable<String> getGfyNameObservable() {
-        if (!TextUtils.isEmpty(mGfyName)) {
-            return Observable.just(mGfyName);
-        }
-
-        return mGfycatService.checkUrl(mGifUrl)
-            .flatMap(
-                new Func1<UrlCheck, Observable<String>>() {
-                    @Override
-                    public Observable<String> call(UrlCheck urlCheck) {
-                        if (urlCheck.isUrlKnown()) {
-                            return Observable.just(urlCheck.getGfyName());
-                        }
-
-                        return mGfycatService.convertGif(mGifUrl).map(new Func1<ConvertGif, String>() {
-                            @Override
-                            public String call(ConvertGif convertGif) {
-                                return convertGif.getGfyName();
-                            }
-                        });
-                    }
-                }
-            )
-            .flatMap(
-                new Func1<String, Observable<? extends String>>() {
-                    @Override
-                    public Observable<? extends String> call(String gfyName) {
-                        // Error out if the name is empty
-                        if (TextUtils.isEmpty(gfyName)) {
-                            return Observable.error(new RuntimeException("Could not get gfyName for url: " + mGifUrl));
-                        }
-
-                        return Observable.just(gfyName);
-                    }
-                }
-            )
-            .doOnNext(new Action1<String>() {
-                @Override
-                public void call(String gfyName) {
-                    mGfyName = gfyName;
-                }
-            });
-    }
-
-    private Observable<GfyMetadata> getGfyMetadataObservable() {
-        if (mGfyMetadata != null) {
-            return Observable.just(mGfyMetadata);
-        }
-
-        return getGfyNameObservable()
-            .flatMap(new Func1<String, Observable<? extends GfyMetadata>>() {
-                @Override
-                public Observable<? extends GfyMetadata> call(String gfyName) {
-                    return mGfycatService.getMetadata(gfyName);
-                }
-            })
-            .doOnNext(new Action1<GfyMetadata>() {
-                @Override
-                public void call(GfyMetadata gfyMetadata) {
-                    mGfyMetadata = gfyMetadata;
-                }
-            });
-    }
-
-    private Observable<MediaPlayer> getLoadMediaPlayerObservable(Observable<GfyMetadata> gfyMetadataObservable) {
+    private Observable<MediaPlayer> getLoadMediaPlayerObservable(Observable<GfyItem> gfyMetadataObservable) {
         return Observable.combineLatest(gfyMetadataObservable, mSurfaceTextureSubject,
-            new Func2<GfyMetadata, SurfaceTexture, MediaPlayer>() {
+            new Func2<GfyItem, SurfaceTexture, MediaPlayer>() {
                 @Override
-                public MediaPlayer call(GfyMetadata gfyMetadata, SurfaceTexture surfaceTexture) {
-                    if (gfyMetadata == null || surfaceTexture == null) {
+                public MediaPlayer call(GfyItem gfyItem, SurfaceTexture surfaceTexture) {
+                    if (gfyItem == null || surfaceTexture == null) {
                         return null;
                     }
 
@@ -443,7 +378,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     });
 
                     try {
-                        mediaPlayer.setDataSource(gfyMetadata.getGfyItem().getWebmUrl());
+                        mediaPlayer.setDataSource(gfyItem.getWebmUrl());
                         mediaPlayer.setSurface(new Surface(mVideoView.getSurfaceTexture()));
                     }
                     catch (Exception e) {
@@ -469,8 +404,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     }
 
     private void loadGfy() {
-        Observable<GfyMetadata> gfyMetadataObservable = getGfyMetadataObservable();
-        Observable<MediaPlayer> readyForDisplayObservable = getLoadMediaPlayerObservable(gfyMetadataObservable);
+        Observable<GfyItem> gfyitemObservable = mGfycatService.getGfyItem(mGifUrl, mGfyName);
+        Observable<MediaPlayer> readyForDisplayObservable = getLoadMediaPlayerObservable(gfyitemObservable);
 
         mLoadVideoSubscription = AppObservable.bindActivity(this, readyForDisplayObservable)
             .subscribeOn(Schedulers.io())
