@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.media.MediaPlayer;
@@ -231,21 +230,18 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         mContainer.animate().alpha(0);
 
         getAlternatives().subscribe(
-            new Action1<List<LabeledIntent>>() {
-                @Override
-                public void call(List<LabeledIntent> intents) {
-                    if (intents.isEmpty()) {
-                        ErrorDialog.newInstance().show(getFragmentManager(), "error");
-                    }
-                    else {
-                        List<LabeledIntent> mutableIntentList = new ArrayList<>(intents);
-                        Intent chooserIntent =
-                            Intent.createChooser(mutableIntentList.remove(0), getString(R.string.error_alternatives));
-                        chooserIntent
-                            .putExtra(Intent.EXTRA_INITIAL_INTENTS, mutableIntentList.toArray(new Parcelable[] { }));
-                        startActivity(chooserIntent);
-                        finish();
-                    }
+            intents -> {
+                if (intents.isEmpty()) {
+                    ErrorDialog.newInstance().show(getFragmentManager(), "error");
+                }
+                else {
+                    List<LabeledIntent> mutableIntentList = new ArrayList<>(intents);
+                    Intent chooserIntent =
+                        Intent.createChooser(mutableIntentList.remove(0), getString(R.string.error_alternatives));
+                    chooserIntent
+                        .putExtra(Intent.EXTRA_INITIAL_INTENTS, mutableIntentList.toArray(new Parcelable[] { }));
+                    startActivity(chooserIntent);
+                    finish();
                 }
             }
         );
@@ -260,32 +256,21 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         dummy.setComponent(null);
 
         return Observable.from(packageManager.queryIntentActivities(dummy, 0))
-            .filter(new Func1<ResolveInfo, Boolean>() {
-                @Override
-                public Boolean call(ResolveInfo resolveInfo) {
-                    return !TextUtils.equals(resolveInfo.activityInfo.packageName, packageName);
-                }
-            })
-            .map(new Func1<ResolveInfo, LabeledIntent>() {
-                @Override
-                public LabeledIntent call(ResolveInfo resolveInfo) {
-                    Intent alternative = new Intent(intent);
-                    alternative.setPackage(resolveInfo.activityInfo.packageName);
-                    alternative.setClassName(resolveInfo.activityInfo.packageName, resolveInfo.activityInfo.name);
+            .filter(resolveInfo -> !TextUtils.equals(resolveInfo.activityInfo.packageName, packageName))
+            .map(resolveInfo -> {
+                Intent alternative = new Intent(intent);
+                alternative.setPackage(resolveInfo.activityInfo.packageName);
+                alternative.setClassName(resolveInfo.activityInfo.packageName, resolveInfo.activityInfo.name);
 
-                    LabeledIntent labeledAlternative = new LabeledIntent(alternative,
-                        resolveInfo.activityInfo.packageName, resolveInfo.loadLabel(packageManager), resolveInfo.icon);
+                LabeledIntent labeledAlternative = new LabeledIntent(alternative,
+                    resolveInfo.activityInfo.packageName, resolveInfo.loadLabel(packageManager), resolveInfo.icon);
 
-                    return labeledAlternative;
-                }
+                return labeledAlternative;
             })
-            .toSortedList(new Func2<LabeledIntent, LabeledIntent, Integer>() {
-                @Override
-                public Integer call(LabeledIntent labeledIntent, LabeledIntent labeledIntent2) {
-                    String label = labeledIntent.getNonLocalizedLabel().toString();
-                    String label2 = labeledIntent2.getNonLocalizedLabel().toString();
-                    return label.compareTo(label2);
-                }
+            .toSortedList((labeledIntent, labeledIntent2) -> {
+                String label = labeledIntent.getNonLocalizedLabel().toString();
+                String label2 = labeledIntent2.getNonLocalizedLabel().toString();
+                return label.compareTo(label2);
             });
     }
 
