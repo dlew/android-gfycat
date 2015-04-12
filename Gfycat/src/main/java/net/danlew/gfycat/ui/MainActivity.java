@@ -27,16 +27,14 @@ import net.danlew.gfycat.Log;
 import net.danlew.gfycat.R;
 import net.danlew.gfycat.Stats;
 import net.danlew.gfycat.model.GfyItem;
-import net.danlew.gfycat.model.GfyMetadata;
 import net.danlew.gfycat.rx.SurfaceTextureEvent;
 import net.danlew.gfycat.rx.TextureChangeOnSubscribe;
 import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
 import rx.Subscription;
-import rx.android.app.AppObservable;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
-import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 
 import javax.inject.Inject;
@@ -52,8 +50,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class MainActivity extends Activity implements ErrorDialog.IListener {
 
-    private static final String INSTANCE_GFY_NAME = "INSTANCE_GFY_NAME";
-    private static final String INSTANCE_GFY_METADATA = "INSTANCE_GFY_METADATA";
     private static final String INSTANCE_CURRENT_POSITION = "INSTANCE_CURRENT_POSITION";
     private static final String INSTANCE_RECORDED_STATS = "INSTANCE_RECORDED_STATS";
 
@@ -74,11 +70,10 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     private String mGifUrl;
     private String mGfyName;
-    private GfyMetadata mGfyMetadata;
-    private int mCurrentPosition;
 
     private MediaPlayer mMediaPlayer;
     private boolean mMediaPlayerPrepared;
+    private int mCurrentPosition;
 
     private Subscription mLoadVideoSubscription;
     private Subscription mVideoProgressBarSubscription;
@@ -100,8 +95,6 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         super.onCreate(savedInstanceState);
 
         if (savedInstanceState != null) {
-            mGfyName = savedInstanceState.getString(INSTANCE_GFY_NAME);
-            mGfyMetadata = savedInstanceState.getParcelable(INSTANCE_GFY_METADATA);
             mCurrentPosition = savedInstanceState.getInt(INSTANCE_CURRENT_POSITION);
             mRecordedStats = savedInstanceState.getBoolean(INSTANCE_RECORDED_STATS);
         }
@@ -183,8 +176,6 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString(INSTANCE_GFY_NAME, mGfyName);
-        outState.putParcelable(INSTANCE_GFY_METADATA, mGfyMetadata);
 
         if (mMediaPlayer != null && mMediaPlayerPrepared) {
             outState.putInt(INSTANCE_CURRENT_POSITION, mMediaPlayer.getCurrentPosition());
@@ -277,161 +268,123 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     //////////////////////////////////////////////////////////////////////////
     // RxJava
 
-    private Observable<MediaPlayer> getLoadMediaPlayerObservable(Observable<GfyItem> gfyMetadataObservable) {
-        return Observable.combineLatest(gfyMetadataObservable, mSurfaceTextureEvents,
-            new Func2<GfyItem, SurfaceTextureEvent, MediaPlayer>() {
-                @Override
-                public MediaPlayer call(GfyItem gfyItem, SurfaceTextureEvent surfaceTextureEvent) {
-                    if (gfyItem == null || surfaceTextureEvent.getType() != SurfaceTextureEvent.Type.AVAILABLE) {
-                        return null;
-                    }
-
-                    MediaPlayer mediaPlayer = new MediaPlayer();
-
-                    mediaPlayer.setLooping(true);
-
-                    mediaPlayer.setOnVideoSizeChangedListener(mAspectRatioListener);
-
-                    mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                        @Override
-                        public void onPrepared(MediaPlayer mp) {
-                            mProgressBar.setVisibility(View.GONE);
-                            mp.start();
-                            mp.seekTo(mCurrentPosition);
-
-                            mVideoProgressBar.setProgress(mCurrentPosition);
-                            mVideoProgressBar.setMax(mMediaPlayer.getDuration());
-
-                            // Only set the progress bar visible if the duration is > 1000ms
-                            if (mMediaPlayer.getDuration() > 1000) {
-                                mVideoProgressBar.setVisibility(View.VISIBLE);
-
-                                mVideoProgressBarSubscription = Observable.interval(10, TimeUnit.MILLISECONDS)
-                                    .filter(new Func1<Long, Boolean>() {
-                                        @Override public Boolean call(Long aLong) {
-                                            return mMediaPlayerPrepared;
-                                        }
-                                    })
-                                    .map(new Func1<Long, Integer>() {
-                                        @Override
-                                        public Integer call(Long value) {
-                                            return mMediaPlayer.getCurrentPosition();
-                                        }
-                                    })
-                                    .subscribe(new Action1<Integer>() {
-                                                   @Override
-                                                   public void call(Integer progress) {
-                                                       mVideoProgressBar.setProgress(progress);
-                                                   }
-                                               },
-                                        new Action1<Throwable>() {
-                                            @Override public void call(Throwable throwable) {
-                                                Crashlytics.logException(throwable);
-                                                showErrorDialog();
-                                            }
-                                        });
-                            }
-                            else {
-                                mVideoProgressBar.setVisibility(View.INVISIBLE);
-                            }
-
-                            if (!mRecordedStats) {
-                                Stats stats = new Stats(MainActivity.this);
-                                stats.addItem(mGfyMetadata.getGfyItem());
-                                mRecordedStats = true;
-                            }
-
-                            mMediaPlayerPrepared = true;
-                        }
-                    });
-
-                    // Enable looping for Samsung devices, tested on Galaxy S5 (4.4.4)
-                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mediaPlayer) {
-                            mediaPlayer.pause();
-                            mediaPlayer.seekTo(0);
-                            mediaPlayer.start();
-                        }
-                    });
-
-                    // Stop what we're doing in case of an error
-                    mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                        @Override public boolean onError(MediaPlayer mp, int what, int extra) {
-                            mMediaPlayerPrepared = false;
-
-                            Crashlytics.log("MediaPlayer error; what=" + what + " extra=" + extra);
-                            showErrorDialog();
-
-                            return false;
-                        }
-                    });
-
-                    try {
-                        mediaPlayer.setDataSource(gfyItem.getWebmUrl());
-                        mediaPlayer.setSurface(new Surface(mVideoView.getSurfaceTexture()));
-                    }
-                    catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    return mediaPlayer;
-                }
-            }
-        )
-            .filter(new Func1<MediaPlayer, Boolean>() {
-                @Override
-                public Boolean call(MediaPlayer mediaPlayer) {
-                    return mediaPlayer != null;
-                }
-            })
-            .doOnNext(new Action1<MediaPlayer>() {
-                @Override
-                public void call(MediaPlayer mediaPlayer) {
-                    mMediaPlayer = mediaPlayer;
-                }
-            });
-    }
-
     private void loadGfy() {
-        Observable<GfyItem> gfyitemObservable = mGfycatService.getGfyItem(mGifUrl, mGfyName);
-        Observable<MediaPlayer> readyForDisplayObservable = getLoadMediaPlayerObservable(gfyitemObservable);
-
-        mLoadVideoSubscription = AppObservable.bindActivity(this, readyForDisplayObservable)
+        mLoadVideoSubscription = mSurfaceTextureEvents
+            .filter(event -> event.getType() == SurfaceTextureEvent.Type.AVAILABLE)
+            .take(1)
+            .flatMap(__ -> mGfycatService.getGfyItem(mGifUrl, mGfyName))
+            .map(this::createMediaPlayerForGfyItem)
             .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
-                new Action1<MediaPlayer>() {
-                    @Override
-                    public void call(MediaPlayer mediaPlayer) {
-                        try {
-                            mMediaPlayerPrepared = false;
-                            mediaPlayer.prepareAsync();
-                        }
-                        catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
+                mediaPlayer -> {
+                    mMediaPlayer = mediaPlayer;
+                    mMediaPlayerPrepared = false;
+                    mediaPlayer.prepareAsync();
                 },
-                new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        Log.e("Could not display GIF", throwable);
-                        Crashlytics.logException(throwable);
-                        showErrorDialog();
-                    }
+                throwable -> {
+                    Log.e("Could not display GIF", throwable);
+                    Crashlytics.logException(throwable);
+                    showErrorDialog();
                 }
             );
     }
 
     //////////////////////////////////////////////////////////////////////////
-    // Listeners
+    // MediaPlayer
 
-    private MediaPlayer.OnVideoSizeChangedListener mAspectRatioListener = new MediaPlayer.OnVideoSizeChangedListener() {
-        @Override
-        public void onVideoSizeChanged(MediaPlayer mp, int dwidth, int dheight) {
-            correctVideoAspectRatio();
+    private MediaPlayer createMediaPlayerForGfyItem(final GfyItem gfyItem) {
+        MediaPlayer mediaPlayer = new MediaPlayer();
+
+        mediaPlayer.setLooping(true);
+
+        mediaPlayer.setOnVideoSizeChangedListener(mAspectRatioListener);
+
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mProgressBar.setVisibility(View.GONE);
+                mp.start();
+                mp.seekTo(mCurrentPosition);
+
+                mVideoProgressBar.setProgress(mCurrentPosition);
+                mVideoProgressBar.setMax(mMediaPlayer.getDuration());
+
+                // Only set the progress bar visible if the duration is > 1000ms
+                if (mMediaPlayer.getDuration() > 1000) {
+                    mVideoProgressBar.setVisibility(View.VISIBLE);
+
+                    mVideoProgressBarSubscription = Observable.interval(10, TimeUnit.MILLISECONDS)
+                        .filter(new Func1<Long, Boolean>() {
+                            @Override public Boolean call(Long aLong) {
+                                return mMediaPlayerPrepared;
+                            }
+                        })
+                        .map(new Func1<Long, Integer>() {
+                            @Override
+                            public Integer call(Long value) {
+                                return mMediaPlayer.getCurrentPosition();
+                            }
+                        })
+                        .subscribe(new Action1<Integer>() {
+                                       @Override
+                                       public void call(Integer progress) {
+                                           mVideoProgressBar.setProgress(progress);
+                                       }
+                                   },
+                            new Action1<Throwable>() {
+                                @Override public void call(Throwable throwable) {
+                                    Crashlytics.logException(throwable);
+                                    showErrorDialog();
+                                }
+                            });
+                }
+                else {
+                    mVideoProgressBar.setVisibility(View.INVISIBLE);
+                }
+
+                if (!mRecordedStats) {
+                    Stats stats = new Stats(MainActivity.this);
+                    stats.addItem(gfyItem);
+                    mRecordedStats = true;
+                }
+
+                mMediaPlayerPrepared = true;
+            }
+        });
+
+        // Enable looping for Samsung devices, tested on Galaxy S5 (4.4.4)
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                mediaPlayer.pause();
+                mediaPlayer.seekTo(0);
+                mediaPlayer.start();
+            }
+        });
+
+        // Stop what we're doing in case of an error
+        mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override public boolean onError(MediaPlayer mp, int what, int extra) {
+                mMediaPlayerPrepared = false;
+
+                Crashlytics.log("MediaPlayer error; what=" + what + " extra=" + extra);
+                showErrorDialog();
+
+                return false;
+            }
+        });
+
+        try {
+            mediaPlayer.setDataSource(gfyItem.getWebmUrl());
+            mediaPlayer.setSurface(new Surface(mVideoView.getSurfaceTexture()));
         }
-    };
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return mediaPlayer;
+    }
 
     // We want to make sure the aspect ratio is correct; we can do that easily by scaling the TextureView
     // to the correct size.
@@ -479,6 +432,16 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         mVideoProgressBar.setScaleX(scaleX);
         mVideoProgressBar.setTranslationY(videoBottom + offset);
     }
+
+    //////////////////////////////////////////////////////////////////////////
+    // Listeners
+
+    private MediaPlayer.OnVideoSizeChangedListener mAspectRatioListener = new MediaPlayer.OnVideoSizeChangedListener() {
+        @Override
+        public void onVideoSizeChanged(MediaPlayer mp, int dwidth, int dheight) {
+            correctVideoAspectRatio();
+        }
+    };
 
     //////////////////////////////////////////////////////////////////////////
     // Gesture detection
