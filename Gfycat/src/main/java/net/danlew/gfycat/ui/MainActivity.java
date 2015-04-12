@@ -27,8 +27,12 @@ import net.danlew.gfycat.Log;
 import net.danlew.gfycat.R;
 import net.danlew.gfycat.Stats;
 import net.danlew.gfycat.model.GfyItem;
+import net.danlew.gfycat.rx.MediaPlayerCompletionOnSubscribe;
+import net.danlew.gfycat.rx.MediaPlayerErrorOnSubscribe;
+import net.danlew.gfycat.rx.MediaPlayerPreparedOnSubscribe;
 import net.danlew.gfycat.rx.SurfaceTextureEvent;
 import net.danlew.gfycat.rx.TextureChangeOnSubscribe;
+import net.danlew.gfycat.rx.VideoSizeChangedOnSubscribe;
 import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
 import rx.Subscription;
@@ -114,8 +118,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             .filter(event -> event.getType() == SurfaceTextureEvent.Type.SIZE_CHANGED)
             .subscribe(__ -> correctVideoAspectRatio());
 
+        // Load the gfyname/gifurl from the intent provided
         if (mGfyName == null && mGifUrl == null) {
-
             Intent intent = getIntent();
 
             // Handle SEND Intent
@@ -215,56 +219,6 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         finish();
     }
 
-    private void showErrorDialog() {
-        // If possible, smoothly get rid of our screen before showing error dialog
-        mProgressBar.animate().alpha(0);
-        mContainer.animate().alpha(0);
-
-        getAlternatives().subscribe(
-            intents -> {
-                if (intents.isEmpty()) {
-                    ErrorDialog.newInstance().show(getFragmentManager(), "error");
-                }
-                else {
-                    List<LabeledIntent> mutableIntentList = new ArrayList<>(intents);
-                    Intent chooserIntent =
-                        Intent.createChooser(mutableIntentList.remove(0), getString(R.string.error_alternatives));
-                    chooserIntent
-                        .putExtra(Intent.EXTRA_INITIAL_INTENTS, mutableIntentList.toArray(new Parcelable[] { }));
-                    startActivity(chooserIntent);
-                    finish();
-                }
-            }
-        );
-    }
-
-    private Observable<List<LabeledIntent>> getAlternatives() {
-        final PackageManager packageManager = getPackageManager();
-        final String packageName = getPackageName();
-
-        final Intent intent = getIntent();
-        Intent dummy = new Intent(intent);
-        dummy.setComponent(null);
-
-        return Observable.from(packageManager.queryIntentActivities(dummy, 0))
-            .filter(resolveInfo -> !TextUtils.equals(resolveInfo.activityInfo.packageName, packageName))
-            .map(resolveInfo -> {
-                Intent alternative = new Intent(intent);
-                alternative.setPackage(resolveInfo.activityInfo.packageName);
-                alternative.setClassName(resolveInfo.activityInfo.packageName, resolveInfo.activityInfo.name);
-
-                LabeledIntent labeledAlternative = new LabeledIntent(alternative,
-                    resolveInfo.activityInfo.packageName, resolveInfo.loadLabel(packageManager), resolveInfo.icon);
-
-                return labeledAlternative;
-            })
-            .toSortedList((labeledIntent, labeledIntent2) -> {
-                String label = labeledIntent.getNonLocalizedLabel().toString();
-                String label2 = labeledIntent2.getNonLocalizedLabel().toString();
-                return label.compareTo(label2);
-            });
-    }
-
     //////////////////////////////////////////////////////////////////////////
     // RxJava
 
@@ -298,11 +252,11 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         mediaPlayer.setLooping(true);
 
-        mediaPlayer.setOnVideoSizeChangedListener(mAspectRatioListener);
+        Observable.create(new VideoSizeChangedOnSubscribe(mediaPlayer))
+            .subscribe(__ -> correctVideoAspectRatio());
 
-        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
+        Observable.create(new MediaPlayerPreparedOnSubscribe(mediaPlayer))
+            .subscribe(mp -> {
                 mProgressBar.setVisibility(View.GONE);
                 mp.start();
                 mp.seekTo(mCurrentPosition);
@@ -350,30 +304,23 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                 }
 
                 mMediaPlayerPrepared = true;
-            }
-        });
+            });
 
         // Enable looping for Samsung devices, tested on Galaxy S5 (4.4.4)
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                mediaPlayer.pause();
-                mediaPlayer.seekTo(0);
-                mediaPlayer.start();
-            }
-        });
+        Observable.create(new MediaPlayerCompletionOnSubscribe(mediaPlayer))
+            .subscribe(completedMediaPlayer -> {
+                completedMediaPlayer.pause();
+                completedMediaPlayer.seekTo(0);
+                completedMediaPlayer.start();
+            });
 
         // Stop what we're doing in case of an error
-        mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override public boolean onError(MediaPlayer mp, int what, int extra) {
+        Observable.create(new MediaPlayerErrorOnSubscribe(mediaPlayer))
+            .subscribe(errorEvent -> {
                 mMediaPlayerPrepared = false;
-
-                Crashlytics.log("MediaPlayer error; what=" + what + " extra=" + extra);
+                Crashlytics.log("MediaPlayer error; what=" + errorEvent.getWhat() + " extra=" + errorEvent.getExtra());
                 showErrorDialog();
-
-                return false;
-            }
-        });
+            });
 
         try {
             mediaPlayer.setDataSource(gfyItem.getWebmUrl());
@@ -434,14 +381,57 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     }
 
     //////////////////////////////////////////////////////////////////////////
-    // Listeners
+    // Error dialog
 
-    private MediaPlayer.OnVideoSizeChangedListener mAspectRatioListener = new MediaPlayer.OnVideoSizeChangedListener() {
-        @Override
-        public void onVideoSizeChanged(MediaPlayer mp, int dwidth, int dheight) {
-            correctVideoAspectRatio();
-        }
-    };
+    private void showErrorDialog() {
+        // If possible, smoothly get rid of our screen before showing error dialog
+        mProgressBar.animate().alpha(0);
+        mContainer.animate().alpha(0);
+
+        getAlternatives().subscribe(
+            intents -> {
+                if (intents.isEmpty()) {
+                    ErrorDialog.newInstance().show(getFragmentManager(), "error");
+                }
+                else {
+                    List<LabeledIntent> mutableIntentList = new ArrayList<>(intents);
+                    Intent chooserIntent =
+                        Intent.createChooser(mutableIntentList.remove(0), getString(R.string.error_alternatives));
+                    chooserIntent
+                        .putExtra(Intent.EXTRA_INITIAL_INTENTS, mutableIntentList.toArray(new Parcelable[] { }));
+                    startActivity(chooserIntent);
+                    finish();
+                }
+            }
+        );
+    }
+
+    private Observable<List<LabeledIntent>> getAlternatives() {
+        final PackageManager packageManager = getPackageManager();
+        final String packageName = getPackageName();
+
+        final Intent intent = getIntent();
+        Intent dummy = new Intent(intent);
+        dummy.setComponent(null);
+
+        return Observable.from(packageManager.queryIntentActivities(dummy, 0))
+            .filter(resolveInfo -> !TextUtils.equals(resolveInfo.activityInfo.packageName, packageName))
+            .map(resolveInfo -> {
+                Intent alternative = new Intent(intent);
+                alternative.setPackage(resolveInfo.activityInfo.packageName);
+                alternative.setClassName(resolveInfo.activityInfo.packageName, resolveInfo.activityInfo.name);
+
+                LabeledIntent labeledAlternative = new LabeledIntent(alternative,
+                    resolveInfo.activityInfo.packageName, resolveInfo.loadLabel(packageManager), resolveInfo.icon);
+
+                return labeledAlternative;
+            })
+            .toSortedList((labeledIntent, labeledIntent2) -> {
+                String label = labeledIntent.getNonLocalizedLabel().toString();
+                String label2 = labeledIntent2.getNonLocalizedLabel().toString();
+                return label.compareTo(label2);
+            });
+    }
 
     //////////////////////////////////////////////////////////////////////////
     // Gesture detection
