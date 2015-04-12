@@ -37,8 +37,6 @@ import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 import javax.inject.Inject;
@@ -261,36 +259,20 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                 mp.start();
                 mp.seekTo(mCurrentPosition);
 
-                mVideoProgressBar.setProgress(mCurrentPosition);
-                mVideoProgressBar.setMax(mMediaPlayer.getDuration());
-
                 // Only set the progress bar visible if the duration is > 1000ms
-                if (mMediaPlayer.getDuration() > 1000) {
+                if (mp.getDuration() > 1000) {
                     mVideoProgressBar.setVisibility(View.VISIBLE);
+                    mVideoProgressBar.setProgress(mCurrentPosition);
+
+                    mVideoProgressBar.setMax(mp.getDuration());
 
                     mVideoProgressBarSubscription = Observable.interval(10, TimeUnit.MILLISECONDS)
-                        .filter(new Func1<Long, Boolean>() {
-                            @Override public Boolean call(Long aLong) {
-                                return mMediaPlayerPrepared;
-                            }
-                        })
-                        .map(new Func1<Long, Integer>() {
-                            @Override
-                            public Integer call(Long value) {
-                                return mMediaPlayer.getCurrentPosition();
-                            }
-                        })
-                        .subscribe(new Action1<Integer>() {
-                                       @Override
-                                       public void call(Integer progress) {
-                                           mVideoProgressBar.setProgress(progress);
-                                       }
-                                   },
-                            new Action1<Throwable>() {
-                                @Override public void call(Throwable throwable) {
-                                    Crashlytics.logException(throwable);
-                                    showErrorDialog();
-                                }
+                        .filter(__ -> mMediaPlayerPrepared)
+                        .map(__ -> mp.getCurrentPosition())
+                        .subscribe(progress -> mVideoProgressBar.setProgress(progress),
+                            throwable -> {
+                                Crashlytics.logException(throwable);
+                                showErrorDialog();
                             });
                 }
                 else {
