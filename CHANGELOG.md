@@ -1,5 +1,9 @@
 # Changelog
 
+# 1.2.4
+
+* Refactored RxJava usage
+
 # 1.2.3
 
 * Handle MediaPlayer errors gracefully
