@@ -19,8 +19,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.ProgressBar;
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import com.crashlytics.android.Crashlytics;
 import net.danlew.gfycat.GfycatApplication;
 import net.danlew.gfycat.Log;
@@ -58,16 +58,16 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @Inject
     GfycatService mGfycatService;
 
-    @InjectView(R.id.container)
+    @Bind(R.id.container)
     ViewGroup mContainer;
 
-    @InjectView(R.id.progress_bar)
+    @Bind(R.id.progress_bar)
     ProgressBar mProgressBar;
 
-    @InjectView(R.id.video_progress_bar)
+    @Bind(R.id.video_progress_bar)
     ProgressBar mVideoProgressBar;
 
-    @InjectView(R.id.video_view)
+    @Bind(R.id.video_view)
     TextureView mVideoView;
 
     private String mGifUrl;
@@ -105,7 +105,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         setContentView(R.layout.activity_main);
 
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
 
         mGestureDetector = new GestureDetector(this, mOnGestureListener);
 
