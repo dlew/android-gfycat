@@ -58,11 +58,13 @@ android {
 dependencies {
     compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile 'com.google.code.gson:gson:2.3.1'
-    compile 'io.reactivex:rxjava:1.0.9'
+    compile 'io.reactivex:rxjava:1.0.14'
     compile 'io.reactivex:rxandroid:0.24.0'
     compile 'com.jakewharton:butterknife:6.1.0'
     compile 'com.squareup.dagger:dagger:1.2.2'
     provided 'com.squareup.dagger:dagger-compiler:1.2.2'
     compile 'com.crashlytics.android:crashlytics:1.+'
-    compile 'com.squareup.okhttp:okhttp:2.3.0'
+    compile 'com.squareup.okhttp:okhttp:2.5.0'
+
+    retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.0.6'
 }
