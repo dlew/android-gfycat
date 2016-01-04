@@ -15,6 +15,9 @@ public class GfyItem implements Parcelable {
     @SerializedName("webmUrl")
     private String mWebmUrl;
 
+    @SerializedName("gifUrl")
+    private String mGifUrl;
+
     @SerializedName("gifSize")
     private long mGifSize;
 
@@ -45,6 +48,10 @@ public class GfyItem implements Parcelable {
         return mWebmSize;
     }
 
+    public String getGifUrl(){
+	return mGifUrl;
+    }
+
     //////////////////////////////////////////////////////////////////////////
     // Parcelable
 
@@ -64,6 +71,7 @@ public class GfyItem implements Parcelable {
         this.mWidth = in.readInt();
         this.mHeight = in.readInt();
         this.mWebmUrl = in.readString();
+	this.mGifUrl = in.readString();
     }
 
     public static final Parcelable.Creator<GfyItem> CREATOR = new Parcelable.Creator<GfyItem>() {

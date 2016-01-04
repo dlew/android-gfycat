@@ -74,6 +74,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     private String mGifUrl;
     private String mGfyName;
+    private Uri mGifUri;
 
     private MediaPlayer mMediaPlayer;
     private boolean mMediaPlayerPrepared;
@@ -146,8 +147,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                     }
                     else if (pathSegments.size() > 1 && pathSegments.get(0).equals("fetch")) {
                         String strUrl = data.toString();
-                        mGifUrl = strUrl.substring(strUrl.indexOf("fetch") + 6);
                     }
+		   
                 }
                 else {
                     mGifUrl = data.toString();
@@ -158,6 +159,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                 showErrorDialog();
                 return;
             }
+	    
         }
 
         // Fade in the background; looks nicer
@@ -261,7 +263,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     private MediaPlayer createMediaPlayerForGfyItem(final GfyItem gfyItem) {
         MediaPlayer mediaPlayer = new MediaPlayer();
-
+	mGifUri = Uri.parse(gfyItem.getGifUrl());
         mediaPlayer.setLooping(true);
 
         Observable.create(new VideoSizeChangedOnSubscribe(mediaPlayer))
@@ -467,12 +469,18 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     }
 
     public void download(){
-	DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-	Request mRequest = new Request(Uri.parse(mGifUrl));
-	mRequest = mRequest.setNotificationVisibility(Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-	mRequest.allowScanningByMediaScanner();
-	mRequest.setVisibleInDownloadsUi(true);
-	dm.enqueue(mRequest);
-	return;
+	try{
+	    DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+	    Request mRequest = new Request(mGifUri);
+	    mRequest = mRequest.setNotificationVisibility(Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+	    mRequest.allowScanningByMediaScanner();
+	    mRequest.setVisibleInDownloadsUi(true);
+	    dm.enqueue(mRequest);
+	    return;
+	}catch(Exception e){
+	    Log.e("Gfycat",e.getMessage());
+	    Log.e("Gfycat",e.getClass().getName());
+	    Log.e("Gfycat","String: "+ mGifUrl);
+	}
     }
 }
