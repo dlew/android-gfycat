@@ -1,6 +1,8 @@
 package net.danlew.gfycat.ui;
 
 import android.app.Activity;
+import android.app.DownloadManager;
+import android.app.DownloadManager.Request;
 import android.content.Intent;
 import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
@@ -215,11 +217,11 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 	mMediaPlayer.pause();
     }
 
-    @Override
-    public void onResume(){
-	super.onResume();
-	mMediaPlayer.start();
-    }
+    // @Override
+    // public void onResume(){
+    // 	super.onResume();
+    // 	mMediaPlayer.start();
+    // }
 
     @Override
     public void onBackPressed() {
@@ -446,9 +448,14 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
                 finish();
                 return true;
             }
-
+	    
             return false;
         }
+	    
+	    public void onLongPress(MotionEvent e) {
+		download();
+		return;
+	    }
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -457,5 +464,15 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @Override
     public void onDismiss() {
         finish();
+    }
+
+    public void download(){
+	DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+	Request mRequest = new Request(Uri.parse(mGifUrl));
+	mRequest = mRequest.setNotificationVisibility(Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+	mRequest.allowScanningByMediaScanner();
+	mRequest.setVisibleInDownloadsUi(true);
+	dm.enqueue(mRequest);
+	return;
     }
 }
