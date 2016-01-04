@@ -210,6 +210,18 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     }
 
     @Override
+    public void onPause(){
+	super.onPause();
+	mMediaPlayer.pause();
+    }
+
+    @Override
+    public void onResume(){
+	super.onResume();
+	mMediaPlayer.start();
+    }
+
+    @Override
     public void onBackPressed() {
         super.onBackPressed();
 
