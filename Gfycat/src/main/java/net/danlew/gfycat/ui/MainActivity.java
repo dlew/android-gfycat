@@ -11,7 +11,9 @@ import android.graphics.RectF;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
+import android.os.Vibrator;
 import android.text.TextUtils;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -455,6 +457,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         }
 	    
 	    public void onLongPress(MotionEvent e) {
+		Vibrator vi = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+		vi.vibrate(50);
 		download();
 		return;
 	    }
@@ -472,7 +476,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 	try{
 	    DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 	    Request mRequest = new Request(mGifUri);
-	    mRequest = mRequest.setNotificationVisibility(Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+	    mRequest.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"");
+	    mRequest.setNotificationVisibility(Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
 	    mRequest.allowScanningByMediaScanner();
 	    mRequest.setVisibleInDownloadsUi(true);
 	    dm.enqueue(mRequest);
