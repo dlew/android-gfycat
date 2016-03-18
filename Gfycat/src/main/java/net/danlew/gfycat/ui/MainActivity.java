@@ -211,16 +211,18 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
     @Override
     public void onPause() {
-	super.onPause();
-        if (mMediaPlayer != null && mMediaPlayerPrepared)
-        	mMediaPlayer.pause();
+        super.onPause();
+        if (mMediaPlayer != null && mMediaPlayerPrepared) {
+            mMediaPlayer.pause();            
+        }
     }
 
     @Override
     public void onResume() {
-    	super.onResume();
-        if (mMediaPlayer != null && mMediaPlayerPrepared)
-        	mMediaPlayer.start();
+        super.onResume();
+        if (mMediaPlayer != null && mMediaPlayerPrepared) {
+            mMediaPlayer.start();            
+        }
     }
 
     @Override
