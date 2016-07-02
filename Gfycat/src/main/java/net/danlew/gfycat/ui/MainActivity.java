@@ -19,7 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.ProgressBar;
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import com.crashlytics.android.Crashlytics;
 import net.danlew.gfycat.GfycatApplication;
@@ -37,7 +37,6 @@ import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -58,16 +57,16 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @Inject
     GfycatService mGfycatService;
 
-    @Bind(R.id.container)
+    @BindView(R.id.container)
     ViewGroup mContainer;
 
-    @Bind(R.id.progress_bar)
+    @BindView(R.id.progress_bar)
     ProgressBar mProgressBar;
 
-    @Bind(R.id.video_progress_bar)
+    @BindView(R.id.video_progress_bar)
     ProgressBar mVideoProgressBar;
 
-    @Bind(R.id.video_view)
+    @BindView(R.id.video_view)
     TextureView mVideoView;
 
     private String mGifUrl;
@@ -225,9 +224,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             .filter(event -> event.getType() == SurfaceTextureEvent.Type.AVAILABLE)
             .take(1)
             .flatMap(__ -> mGfycatService.getGfyItem(mGifUrl, mGfyName))
-            .map(this::createMediaPlayerForGfyItem)
-            .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
+            .map(this::createMediaPlayerForGfyItem)
             .subscribe(
                 mediaPlayer -> {
                     mMediaPlayer = mediaPlayer;

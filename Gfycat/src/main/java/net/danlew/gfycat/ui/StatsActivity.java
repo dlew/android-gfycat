@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.text.format.Formatter;
 import android.view.View;
 import android.widget.TextView;
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import net.danlew.gfycat.R;
 import net.danlew.gfycat.Stats;
@@ -15,10 +15,10 @@ import net.danlew.gfycat.Stats;
  */
 public class StatsActivity extends Activity {
 
-    @Bind(R.id.savings)
+    @BindView(R.id.savings)
     TextView mSavingsTextView;
 
-    @Bind(R.id.explanation)
+    @BindView(R.id.explanation)
     TextView mExplanationTextView;
 
     private Stats mStats;

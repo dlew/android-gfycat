@@ -1,9 +1,9 @@
 package net.danlew.gfycat.rx;
 
 import android.media.MediaPlayer;
-import com.jakewharton.rxbinding.internal.MainThreadSubscription;
 import rx.Observable;
 import rx.Subscriber;
+import rx.android.MainThreadSubscription;
 
 import static com.jakewharton.rxbinding.internal.Preconditions.checkUiThread;
 
