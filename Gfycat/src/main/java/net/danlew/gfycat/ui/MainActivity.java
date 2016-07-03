@@ -313,9 +313,14 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
         // Stop what we're doing in case of an error
         Observable.create(new MediaPlayerErrorOnSubscribe(mediaPlayer))
             .subscribe(errorEvent -> {
-                mMediaPlayerPrepared = false;
-                Crashlytics.log("MediaPlayer error; what=" + errorEvent.getWhat() + " extra=" + errorEvent.getExtra());
-                showErrorDialog();
+                // We don't really shutdown streams properly, but frankly this is just a maintenance mode fix
+                // so I don't want to look too deeply into it. It'll clean itself up in a bit.
+                if (!isFinishing()) {
+                    mMediaPlayerPrepared = false;
+                    Crashlytics.log(
+                        "MediaPlayer error; what=" + errorEvent.getWhat() + " extra=" + errorEvent.getExtra());
+                    showErrorDialog();
+                }
             });
 
         try {
