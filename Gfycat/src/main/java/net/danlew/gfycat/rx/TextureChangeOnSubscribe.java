@@ -4,8 +4,9 @@ import android.graphics.SurfaceTexture;
 import android.view.TextureView;
 import rx.Observable;
 import rx.Subscriber;
-import rx.Subscription;
-import rx.android.AndroidSubscriptions;
+import rx.android.MainThreadSubscription;
+
+import static com.jakewharton.rxbinding.internal.Preconditions.checkUiThread;
 
 public class TextureChangeOnSubscribe implements Observable.OnSubscribe<SurfaceTextureEvent> {
 
@@ -17,35 +18,48 @@ public class TextureChangeOnSubscribe implements Observable.OnSubscribe<SurfaceT
 
     @Override
     public void call(Subscriber<? super SurfaceTextureEvent> subscriber) {
+        checkUiThread();
+
         TextureView.SurfaceTextureListener listener = new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                subscriber.onNext(new SurfaceTextureEvent(SurfaceTextureEvent.Type.AVAILABLE, surface, width, height));
+                if (!subscriber.isUnsubscribed()) {
+                    subscriber.onNext(
+                        new SurfaceTextureEvent(SurfaceTextureEvent.Type.AVAILABLE, surface, width, height));
+                }
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-                subscriber.onNext(
-                    new SurfaceTextureEvent(SurfaceTextureEvent.Type.SIZE_CHANGED, surface, width, height));
+                if (!subscriber.isUnsubscribed()) {
+                    subscriber.onNext(
+                        new SurfaceTextureEvent(SurfaceTextureEvent.Type.SIZE_CHANGED, surface, width, height));
+                }
             }
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-                subscriber.onNext(new SurfaceTextureEvent(SurfaceTextureEvent.Type.UPDATED, surface));
+                if (!subscriber.isUnsubscribed()) {
+                    subscriber.onNext(new SurfaceTextureEvent(SurfaceTextureEvent.Type.UPDATED, surface));
+                }
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                subscriber.onNext(new SurfaceTextureEvent(SurfaceTextureEvent.Type.DESTROYED, surface));
+                if (!subscriber.isUnsubscribed()) {
+                    subscriber.onNext(new SurfaceTextureEvent(SurfaceTextureEvent.Type.DESTROYED, surface));
+                }
                 return true;
             }
         };
 
-        Subscription subscription =
-            AndroidSubscriptions.unsubscribeInUiThread(() -> mTextureView.setSurfaceTextureListener(null));
-
-        subscriber.add(subscription);
-
         mTextureView.setSurfaceTextureListener(listener);
+
+        subscriber.add(new MainThreadSubscription() {
+            @Override
+            protected void onUnsubscribe() {
+                mTextureView.setSurfaceTextureListener(null);
+            }
+        });
     }
 }

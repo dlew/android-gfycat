@@ -3,8 +3,9 @@ package net.danlew.gfycat.rx;
 import android.media.MediaPlayer;
 import rx.Observable;
 import rx.Subscriber;
-import rx.Subscription;
-import rx.android.AndroidSubscriptions;
+import rx.android.MainThreadSubscription;
+
+import static com.jakewharton.rxbinding.internal.Preconditions.checkUiThread;
 
 public class MediaPlayerErrorOnSubscribe implements Observable.OnSubscribe<MediaPlayerErrorEvent> {
 
@@ -16,13 +17,21 @@ public class MediaPlayerErrorOnSubscribe implements Observable.OnSubscribe<Media
 
     @Override
     public void call(Subscriber<? super MediaPlayerErrorEvent> subscriber) {
-        Subscription subscription =
-            AndroidSubscriptions.unsubscribeInUiThread(() -> mMediaPlayer.setOnErrorListener(null));
-        subscriber.add(subscription);
+        checkUiThread();
 
         mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
-            subscriber.onNext(new MediaPlayerErrorEvent(mp, what, extra));
-            return true;
+            if (!subscriber.isUnsubscribed()) {
+                subscriber.onNext(new MediaPlayerErrorEvent(mp, what, extra));
+                return true;
+            }
+            return false;
+        });
+
+        subscriber.add(new MainThreadSubscription() {
+            @Override
+            protected void onUnsubscribe() {
+                mMediaPlayer.setOnErrorListener(null);
+            }
         });
     }
 }

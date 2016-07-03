@@ -3,8 +3,9 @@ package net.danlew.gfycat.rx;
 import android.media.MediaPlayer;
 import rx.Observable;
 import rx.Subscriber;
-import rx.Subscription;
-import rx.android.AndroidSubscriptions;
+import rx.android.MainThreadSubscription;
+
+import static com.jakewharton.rxbinding.internal.Preconditions.checkUiThread;
 
 public class MediaPlayerCompletionOnSubscribe implements Observable.OnSubscribe<MediaPlayer> {
 
@@ -16,10 +17,20 @@ public class MediaPlayerCompletionOnSubscribe implements Observable.OnSubscribe<
 
     @Override
     public void call(Subscriber<? super MediaPlayer> subscriber) {
-        Subscription subscription =
-            AndroidSubscriptions.unsubscribeInUiThread(() -> mMediaPlayer.setOnCompletionListener(null));
-        subscriber.add(subscription);
+        checkUiThread();
 
-        mMediaPlayer.setOnCompletionListener(mp -> subscriber.onNext(mp));
+        mMediaPlayer.setOnCompletionListener(mp -> {
+            if (!subscriber.isUnsubscribed()) {
+                subscriber.onNext(mp);
+            }
+        });
+
+        subscriber.add(new MainThreadSubscription() {
+            @Override
+            protected void onUnsubscribe() {
+                mMediaPlayer.setOnCompletionListener(null);
+            }
+        });
+
     }
 }

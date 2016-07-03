@@ -19,8 +19,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.ProgressBar;
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import com.crashlytics.android.Crashlytics;
 import net.danlew.gfycat.GfycatApplication;
 import net.danlew.gfycat.Log;
@@ -37,7 +37,6 @@ import net.danlew.gfycat.service.GfycatService;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -58,16 +57,16 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
     @Inject
     GfycatService mGfycatService;
 
-    @InjectView(R.id.container)
+    @BindView(R.id.container)
     ViewGroup mContainer;
 
-    @InjectView(R.id.progress_bar)
+    @BindView(R.id.progress_bar)
     ProgressBar mProgressBar;
 
-    @InjectView(R.id.video_progress_bar)
+    @BindView(R.id.video_progress_bar)
     ProgressBar mVideoProgressBar;
 
-    @InjectView(R.id.video_view)
+    @BindView(R.id.video_view)
     TextureView mVideoView;
 
     private String mGifUrl;
@@ -105,7 +104,7 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
 
         setContentView(R.layout.activity_main);
 
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
 
         mGestureDetector = new GestureDetector(this, mOnGestureListener);
 
@@ -241,9 +240,8 @@ public class MainActivity extends Activity implements ErrorDialog.IListener {
             .filter(event -> event.getType() == SurfaceTextureEvent.Type.AVAILABLE)
             .take(1)
             .flatMap(__ -> mGfycatService.getGfyItem(mGifUrl, mGfyName))
-            .map(this::createMediaPlayerForGfyItem)
-            .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
+            .map(this::createMediaPlayerForGfyItem)
             .subscribe(
                 mediaPlayer -> {
                     mMediaPlayer = mediaPlayer;

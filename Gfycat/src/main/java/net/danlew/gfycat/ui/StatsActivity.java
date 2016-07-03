@@ -5,8 +5,8 @@ import android.os.Bundle;
 import android.text.format.Formatter;
 import android.view.View;
 import android.widget.TextView;
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import net.danlew.gfycat.R;
 import net.danlew.gfycat.Stats;
 
@@ -15,10 +15,10 @@ import net.danlew.gfycat.Stats;
  */
 public class StatsActivity extends Activity {
 
-    @InjectView(R.id.savings)
+    @BindView(R.id.savings)
     TextView mSavingsTextView;
 
-    @InjectView(R.id.explanation)
+    @BindView(R.id.explanation)
     TextView mExplanationTextView;
 
     private Stats mStats;
@@ -31,7 +31,7 @@ public class StatsActivity extends Activity {
 
         setContentView(R.layout.activity_stats);
 
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
     }
 
     @Override
