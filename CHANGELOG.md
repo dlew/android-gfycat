@@ -1,5 +1,9 @@
 # Changelog
 
+# 1.2.5
+
+* Fixed random error crasher with hack.
+
 # 1.2.4
 
 * Refactored RxJava usage
