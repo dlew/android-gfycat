@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Gfycat</string>
+    <string name="app_name">Gfycat Viewer</string>
 
     <string name="error_loading_gif">Sorry, this link could not be loaded via gfycat.</string>
 
-    <string name="error_alternatives">Gfycat failed, load image with</string>
+    <string name="error_alternatives">Gfycat Viewer failed, load image with</string>
 
     <string name="you_saved">You have saved</string>
     <string name="diddly_squat">diddly squat</string>
-    <string name="using_gfycat">bandwidth by using Gfycat!</string>
+    <string name="using_gfycat">bandwidth by using Gfycat Viewer!</string>
     <string name="explanation">(Whenever you open a link that leads to a GIF, you should choose to use this app and it\'ll use less bandwidth and load faster!)</string>
 
 </resources>
