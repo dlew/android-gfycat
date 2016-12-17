@@ -5,7 +5,7 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.android.MainThreadSubscription;
 
-import static com.jakewharton.rxbinding.internal.Preconditions.checkUiThread;
+import static rx.android.MainThreadSubscription.verifyMainThread;
 
 public class VideoSizeChangedOnSubscribe implements Observable.OnSubscribe<MediaPlayer> {
 
@@ -17,7 +17,7 @@ public class VideoSizeChangedOnSubscribe implements Observable.OnSubscribe<Media
 
     @Override
     public void call(Subscriber<? super MediaPlayer> subscriber) {
-        checkUiThread();
+        verifyMainThread();
 
         mMediaPlayer.setOnVideoSizeChangedListener((mp, __, ___) -> {
             if (!subscriber.isUnsubscribed()) {
