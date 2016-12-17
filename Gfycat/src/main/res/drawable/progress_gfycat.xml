@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rotate xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/ic_launcher"
+    android:drawable="@drawable/logo"
     android:pivotX="50%"
     android:pivotY="50%"
     android:fromDegrees="0"
