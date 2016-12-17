@@ -5,7 +5,7 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.android.MainThreadSubscription;
 
-import static com.jakewharton.rxbinding.internal.Preconditions.checkUiThread;
+import static rx.android.MainThreadSubscription.verifyMainThread;
 
 public class MediaPlayerErrorOnSubscribe implements Observable.OnSubscribe<MediaPlayerErrorEvent> {
 
@@ -17,7 +17,7 @@ public class MediaPlayerErrorOnSubscribe implements Observable.OnSubscribe<Media
 
     @Override
     public void call(Subscriber<? super MediaPlayerErrorEvent> subscriber) {
-        checkUiThread();
+        verifyMainThread();
 
         mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
             if (!subscriber.isUnsubscribed()) {

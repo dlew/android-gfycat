@@ -6,7 +6,7 @@ buildscript {
 
     dependencies {
         classpath 'com.crashlytics.tools.gradle:crashlytics-gradle:1.16.0'
-        classpath 'me.tatarka:gradle-retrolambda:3.2.5'
+        classpath 'me.tatarka:gradle-retrolambda:3.4.0'
     }
 }
 
@@ -19,12 +19,12 @@ repositories {
 }
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.0"
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 24
+        targetSdkVersion 25
         versionCode 8
         versionName "1.2.5"
     }
@@ -59,19 +59,19 @@ dependencies {
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
     compile 'com.squareup.retrofit2:adapter-rxjava:2.1.0'
-    compile 'com.google.code.gson:gson:2.7'
+    compile 'com.google.code.gson:gson:2.8.0'
 
-    compile 'io.reactivex:rxjava:1.1.6'
+    compile 'io.reactivex:rxjava:1.2.4'
     compile 'io.reactivex:rxandroid:1.2.1'
-    compile 'com.jakewharton.rxbinding:rxbinding:0.4.0'
+    compile 'com.jakewharton.rxbinding:rxbinding:1.0.0'
 
-    compile 'com.jakewharton:butterknife:8.1.0'
-    provided 'com.jakewharton:butterknife-compiler:8.1.0'
+    compile 'com.jakewharton:butterknife:8.4.0'
+    provided 'com.jakewharton:butterknife-compiler:8.4.0'
     compile 'com.squareup.dagger:dagger:1.2.5'
     provided 'com.squareup.dagger:dagger-compiler:1.2.5'
     compile 'com.crashlytics.android:crashlytics:1.1.13'
-    compile 'com.squareup.okhttp3:okhttp:3.3.1'
-    compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
+    compile 'com.squareup.okhttp3:okhttp:3.5.0'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.5.0'
 
     retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.3.0'
 }

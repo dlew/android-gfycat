@@ -6,7 +6,7 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.android.MainThreadSubscription;
 
-import static com.jakewharton.rxbinding.internal.Preconditions.checkUiThread;
+import static rx.android.MainThreadSubscription.verifyMainThread;
 
 public class TextureChangeOnSubscribe implements Observable.OnSubscribe<SurfaceTextureEvent> {
 
@@ -18,7 +18,7 @@ public class TextureChangeOnSubscribe implements Observable.OnSubscribe<SurfaceT
 
     @Override
     public void call(Subscriber<? super SurfaceTextureEvent> subscriber) {
-        checkUiThread();
+        verifyMainThread();
 
         TextureView.SurfaceTextureListener listener = new TextureView.SurfaceTextureListener() {
             @Override
