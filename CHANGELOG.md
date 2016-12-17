@@ -1,5 +1,10 @@
 # Changelog
 
+# 1.3.0
+
+* [#26](https://github.com/dlew/android-gfycat/pull/26) Updated logo to match new Gfycat icon
+* [#27](https://github.com/dlew/android-gfycat/pull/27) Changed name to Gfycat Viewer
+
 # 1.2.5
 
 * Fixed random error crasher with hack.
