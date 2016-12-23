@@ -1,5 +1,9 @@
 # Changelog
 
+# 1.3.1
+
+* [#28](https://github.com/dlew/android-gfycat/pull/28) Updated logo to specifically NOT match new Gfycat icon
+
 # 1.3.0
 
 * [#26](https://github.com/dlew/android-gfycat/pull/26) Updated logo to match new Gfycat icon
