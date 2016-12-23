@@ -8,3 +8,4 @@ Contributors
 
 - Dan Lew (dlew)
 - John Seybold (jseybold)
+- Icon made by [Freepik](http://www.flaticon.com/authors/freepik) from www.flaticon.com
