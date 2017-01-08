@@ -50,7 +50,7 @@ public class GfycatService {
 
         mConvertService = new Retrofit.Builder()
             .client(okHttpClient)
-            .baseUrl("http://upload.gfycat.com/")
+            .baseUrl("https://upload.gfycat.com/")
             .addCallAdapterFactory(rxJavaCallAdapterFactory)
             .addConverterFactory(gsonConverterFactory)
             .build()
@@ -58,7 +58,7 @@ public class GfycatService {
 
         mService = new Retrofit.Builder()
             .client(okHttpClient)
-            .baseUrl("http://gfycat.com/")
+            .baseUrl("https://gfycat.com/")
             .addCallAdapterFactory(rxJavaCallAdapterFactory)
             .addConverterFactory(gsonConverterFactory)
             .build()
